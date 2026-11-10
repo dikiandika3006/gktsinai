@@ -44,6 +44,8 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('filament.menu-search'))
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
+            // Konten memakai seluruh lebar layar (bawaan Filament dibatasi 7xl / ±1280px).
+            ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->navigationGroups([
                 NavigationGroup::make('Jemaat'),
                 NavigationGroup::make('Ibadah & Kehadiran'),
