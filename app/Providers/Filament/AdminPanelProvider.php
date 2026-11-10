@@ -45,11 +45,10 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                NavigationGroup::make('Data Jemaat'),
-                NavigationGroup::make('Kehadiran'),
-                NavigationGroup::make('Tamu & Follow-Up'),
-                NavigationGroup::make('Visitasi'),
+                NavigationGroup::make('Jemaat'),
+                NavigationGroup::make('Ibadah & Kehadiran'),
                 NavigationGroup::make('Pelayanan'),
+                NavigationGroup::make('Pastoral'),
                 NavigationGroup::make('Laporan'),
                 NavigationGroup::make('Pengaturan')->collapsed(),
             ])
@@ -57,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Absensi (HP petugas)')
                     ->url(fn () => route('absen.index'), shouldOpenInNewTab: true)
                     ->icon(Heroicon::OutlinedDevicePhoneMobile)
-                    ->group('Kehadiran')
+                    ->group('Ibadah & Kehadiran')
                     ->sort(0)
                     ->visible(fn () => (bool) auth()->user()?->kelolaKehadiran()),
             ])

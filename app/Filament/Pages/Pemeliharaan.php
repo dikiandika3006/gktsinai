@@ -27,6 +27,8 @@ class Pemeliharaan extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
+    protected static ?int $navigationSort = 5;
+
     protected static ?string $title = 'Pemeliharaan Sistem';
 
     public ?string $output = null;

@@ -43,7 +43,9 @@ class FamilyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHome;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Data Jemaat';
+    protected static string|\UnitEnum|null $navigationGroup = 'Jemaat';
+
+    protected static ?string $slug = 'kk';
 
     protected static ?int $navigationSort = 2;
 

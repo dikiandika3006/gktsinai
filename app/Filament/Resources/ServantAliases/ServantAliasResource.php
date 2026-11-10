@@ -31,6 +31,8 @@ class ServantAliasResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pelayanan';
 
+    protected static ?string $slug = 'nama-pelayan';
+
     protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Nama Pelayan';

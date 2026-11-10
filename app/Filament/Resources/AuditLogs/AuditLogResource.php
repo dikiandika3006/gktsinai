@@ -23,6 +23,10 @@ class AuditLogResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
+    protected static ?string $slug = 'log-audit';
+
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $modelLabel = 'Log Audit';
 
     protected static ?string $pluralModelLabel = 'Log Audit';

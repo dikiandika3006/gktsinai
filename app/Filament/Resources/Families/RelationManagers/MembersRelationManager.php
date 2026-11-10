@@ -52,7 +52,10 @@ class MembersRelationManager extends RelationManager
             ->defaultSort('birth_date')
             ->columns([
                 TextColumn::make('code')->label('Kode'),
-                TextColumn::make('name')->label('Nama')->description(fn ($record) => $record?->alias),
+                TextColumn::make('name')->label('Nama')->description(fn ($record) => $record?->alias)
+                    ->weight(fn ($record) => $record?->id === $this->getOwnerRecord()->head_member_id ? 'bold' : null)
+                    ->icon(fn ($record) => $record?->id === $this->getOwnerRecord()->head_member_id ? Heroicon::Star : null)
+                    ->iconColor('warning'),
                 TextColumn::make('family_relation')->label('Hubungan')->formatStateUsing(fn ($state) => Opsi::label(Opsi::HUBUNGAN, $state)),
                 TextColumn::make('gender')->label('L/P'),
                 TextColumn::make('age')->label('Umur'),
@@ -65,10 +68,10 @@ class MembersRelationManager extends RelationManager
                 Action::make('lihat')->label('Profil')->icon(Heroicon::OutlinedEye)
                     ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record])),
                 EditAction::make(),
-                ActionGroup::make([
-                    KeluargaActions::jadikanKepala()->after(fn () => $this->getOwnerRecord()->refresh()),
-                    KeluargaActions::pindah()->after(fn () => $this->getOwnerRecord()->refresh()),
-                ]),
+                // Tombol langsung (tidak di menu ⋮) supaya mudah ditemukan.
+                KeluargaActions::jadikanKepala()->label('Jadikan kepala')->color('warning')
+                    ->after(fn () => $this->getOwnerRecord()->refresh()),
+                KeluargaActions::pindah()->color('gray')->after(fn () => $this->getOwnerRecord()->refresh()),
             ])
             ->toolbarActions([
                 KeluargaActions::pindahBulk()->label('Pindah KK terpilih')->after(fn () => $this->getOwnerRecord()->refresh()),

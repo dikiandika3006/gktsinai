@@ -26,6 +26,10 @@ class ActivityTypeResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
+    protected static ?string $slug = 'jenis-kegiatan';
+
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $modelLabel = 'Jenis Kegiatan';
 
     protected static ?string $pluralModelLabel = 'Jenis Kegiatan';

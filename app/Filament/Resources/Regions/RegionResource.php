@@ -34,6 +34,10 @@ class RegionResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
+    protected static ?string $slug = 'wilayah';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $modelLabel = 'Wilayah';
 
     protected static ?string $pluralModelLabel = 'Wilayah';

@@ -55,7 +55,9 @@ class MemberResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Data Jemaat';
+    protected static string|\UnitEnum|null $navigationGroup = 'Jemaat';
+
+    protected static ?string $slug = 'jemaat';
 
     protected static ?int $navigationSort = 1;
 

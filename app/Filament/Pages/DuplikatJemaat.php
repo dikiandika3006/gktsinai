@@ -16,9 +16,9 @@ class DuplikatJemaat extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentDuplicate;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Data Jemaat';
+    protected static string|\UnitEnum|null $navigationGroup = 'Jemaat';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $title = 'Kemungkinan Duplikat';
 

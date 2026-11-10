@@ -19,9 +19,9 @@ class PetaJemaat extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGlobeAsiaAustralia;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Data Jemaat';
+    protected static string|\UnitEnum|null $navigationGroup = 'Jemaat';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $title = 'Peta Persebaran';
 

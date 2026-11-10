@@ -48,7 +48,11 @@ class GuestResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Tamu & Follow-Up';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pastoral';
+
+    protected static ?string $slug = 'tamu';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Tamu';
 

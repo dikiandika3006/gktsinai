@@ -23,7 +23,7 @@ class LaporanKehadiran extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Kehadiran';
+    protected static string|\UnitEnum|null $navigationGroup = 'Ibadah & Kehadiran';
 
     protected static ?int $navigationSort = 2;
 

@@ -38,7 +38,9 @@ class ActivitySessionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Kehadiran';
+    protected static string|\UnitEnum|null $navigationGroup = 'Ibadah & Kehadiran';
+
+    protected static ?string $slug = 'sesi-kegiatan';
 
     protected static ?int $navigationSort = 1;
 

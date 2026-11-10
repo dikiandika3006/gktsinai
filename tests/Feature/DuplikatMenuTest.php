@@ -24,7 +24,7 @@ class DuplikatMenuTest extends TestCase
         Member::create(['name' => 'Budi Santoso', 'birth_date' => '1980-05-02', 'membership_status' => 'simpatisan']);
         $this->assertTrue(DuplikatJemaat::shouldRegisterNavigation());
         $this->assertSame('1', DuplikatJemaat::getNavigationBadge());
-        $this->get('/admin/members')->assertOk()->assertSee('Kemungkinan Duplikat');
+        $this->get('/admin/jemaat')->assertOk()->assertSee('Kemungkinan Duplikat');
         $this->get('/admin/import-jemaat')->assertNotFound();
     }
 }

@@ -40,7 +40,9 @@ class VisitResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHomeModern;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Visitasi';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pastoral';
+
+    protected static ?string $slug = 'kunjungan';
 
     protected static ?int $navigationSort = 1;
 

@@ -37,6 +37,8 @@ class WorshipScheduleResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Pelayanan';
 
+    protected static ?string $slug = 'jadwal-ibadah';
+
     protected static ?int $navigationSort = 2;
 
     protected static ?string $modelLabel = 'Jadwal Ibadah';

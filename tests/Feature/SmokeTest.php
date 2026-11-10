@@ -41,12 +41,12 @@ class SmokeTest extends TestCase
         $v = Visit::first();
 
         $urls = [
-            '/admin', '/admin/members', '/admin/members/create', "/admin/members/{$m->id}", "/admin/members/{$m->id}/edit",
-            '/admin/families', '/admin/families/create', "/admin/families/{$f->id}", "/admin/families/{$f->id}/edit",
-            '/admin/regions', '/admin/regions/create', '/admin/commissions', '/admin/commissions/'.Commission::first()->id.'/edit', '/admin/activity-types',
-            '/admin/activity-sessions', "/admin/activity-sessions/{$s->id}", '/admin/activity-sessions/create',
-            '/admin/guests', "/admin/guests/{$g->id}", '/admin/visits', "/admin/visits/{$v->id}",
-            '/admin/growth-targets', '/admin/pertumbuhan', '/admin/laporan-kehadiran', '/admin/daftar-perhatian',
+            '/admin', '/admin/jemaat', '/admin/jemaat/create', "/admin/jemaat/{$m->id}", "/admin/jemaat/{$m->id}/edit",
+            '/admin/kk', '/admin/kk/create', "/admin/kk/{$f->id}", "/admin/kk/{$f->id}/edit",
+            '/admin/wilayah', '/admin/wilayah/create', '/admin/komisi', '/admin/komisi/'.Commission::first()->id.'/edit', '/admin/jenis-kegiatan',
+            '/admin/sesi-kegiatan', "/admin/sesi-kegiatan/{$s->id}", '/admin/sesi-kegiatan/create',
+            '/admin/tamu', "/admin/tamu/{$g->id}", '/admin/kunjungan', "/admin/kunjungan/{$v->id}",
+            '/admin/target-pertumbuhan', '/admin/pertumbuhan', '/admin/laporan-kehadiran', '/admin/daftar-perhatian',
             '/admin/usulan-visitasi', '/admin/peta-jemaat', '/admin/duplikat-jemaat',
             '/absen', "/absen/{$s->id}", "/absen/{$s->id}/data", "/sesi/{$s->id}/qr",
             "/pdf/jemaat/{$m->id}", "/pdf/kk/{$f->id}", '/pdf/rekap', '/pdf/bulanan?bulan='.now()->format('Y-m'),
@@ -84,24 +84,24 @@ class SmokeTest extends TestCase
     public function test_role_restrictions(): void
     {
         $this->actingAs($this->user('penyambut@gktsinai.test'));
-        $this->get('/admin/members')->assertForbidden();
+        $this->get('/admin/jemaat')->assertForbidden();
         $this->get('/admin/peta-jemaat')->assertForbidden();
         $this->get('/absen')->assertOk();
 
         $this->flushSession();
         $this->actingAs($this->user('majelis@gktsinai.test'));
-        $this->get('/admin/members')->assertOk();
+        $this->get('/admin/jemaat')->assertOk();
         $this->get('/admin/pemeliharaan')->assertForbidden();
         $this->get('/pdf/rekap')->assertForbidden();
 
         // Catatan rahasia hanya terbaca pendeta & penulis.
         $v = Visit::whereHas('report', fn ($q) => $q->where('is_confidential', true))->first();
-        $this->get("/admin/visits/{$v->id}")->assertOk()->assertDontSee($v->report->conversation);
+        $this->get("/admin/kunjungan/{$v->id}")->assertOk()->assertDontSee($v->report->conversation);
 
         $this->flushSession();
         $this->actingAs($this->user('visitasi@gktsinai.test'));
-        $this->get("/admin/visits/{$v->id}")->assertOk()->assertSee($v->report->conversation);
-        $this->get('/admin/members')->assertOk();
+        $this->get("/admin/kunjungan/{$v->id}")->assertOk()->assertSee($v->report->conversation);
+        $this->get('/admin/jemaat')->assertOk();
     }
 
     public function test_public_guest_form_and_self_checkin(): void
@@ -154,7 +154,7 @@ class SmokeTest extends TestCase
     {
         $this->actingAs($this->user('absensi@gktsinai.test'));
         $this->get('/admin')->assertRedirect('/absen');
-        $this->get('/admin/members')->assertRedirect('/absen');
+        $this->get('/admin/jemaat')->assertRedirect('/absen');
         $this->get('/absen')->assertOk()->assertSee('absen-root', false)->assertDontSee('/admin"', false);
 
         // KU I, KU II, dan Gabungan pada tanggal yang sama adalah sesi terpisah; tanggal bebas dipilih.

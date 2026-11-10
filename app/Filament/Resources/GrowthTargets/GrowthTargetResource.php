@@ -25,7 +25,9 @@ class GrowthTargetResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Laporan';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?string $slug = 'target-pertumbuhan';
+
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $modelLabel = 'Target Pertumbuhan';
 

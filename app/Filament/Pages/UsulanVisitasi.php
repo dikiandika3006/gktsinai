@@ -17,7 +17,7 @@ class UsulanVisitasi extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLightBulb;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Visitasi';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pastoral';
 
     protected static ?int $navigationSort = 2;
 

@@ -30,9 +30,11 @@ class CommissionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Data Jemaat';
+    protected static string|\UnitEnum|null $navigationGroup = 'Jemaat';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'komisi';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Komisi';
 

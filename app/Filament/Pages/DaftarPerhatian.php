@@ -18,7 +18,7 @@ class DaftarPerhatian extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedExclamationTriangle;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Kehadiran';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pastoral';
 
     protected static ?int $navigationSort = 3;
 

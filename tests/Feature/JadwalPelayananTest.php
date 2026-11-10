@@ -123,13 +123,13 @@ class JadwalPelayananTest extends TestCase
         $s = WorshipSchedule::first();
 
         $this->actingAs(User::where('email', 'sekretariat@gktsinai.test')->firstOrFail());
-        foreach (['/admin/jadwal-bulanan?bulan=2026-11', '/admin/worship-schedules', '/admin/worship-schedules/create',
-            "/admin/worship-schedules/{$s->id}", "/admin/worship-schedules/{$s->id}/edit", '/admin/beban-pelayanan', '/admin/servant-aliases',
+        foreach (['/admin/jadwal-bulanan?bulan=2026-11', '/admin/jadwal-ibadah', '/admin/jadwal-ibadah/create',
+            "/admin/jadwal-ibadah/{$s->id}", "/admin/jadwal-ibadah/{$s->id}/edit", '/admin/beban-pelayanan', '/admin/nama-pelayan',
             '/admin/kaleidoskop-pelayanan'] as $u) {
             $res = $this->get($u);
             $this->assertSame(200, $res->status(), "GET {$u} -> {$res->status()} ".($res->exception?->getMessage() ?? ''));
         }
-        $this->get("/admin/worship-schedules/{$s->id}")->assertSee('Kasihilah TUHAN Allahmu')->assertSee('Pnt. Anis W.');
+        $this->get("/admin/jadwal-ibadah/{$s->id}")->assertSee('Kasihilah TUHAN Allahmu')->assertSee('Pnt. Anis W.');
 
         Livewire::test(BebanPelayanan::class)
             ->set('dari', '2026-11-01')->set('sampai', '2026-11-30')
@@ -140,7 +140,7 @@ class JadwalPelayananTest extends TestCase
         $this->flushSession();
         $this->actingAs(User::where('email', 'majelis@gktsinai.test')->firstOrFail());
         $this->get('/admin/jadwal-bulanan')->assertOk();
-        $this->get('/admin/worship-schedules/create')->assertForbidden();
+        $this->get('/admin/jadwal-ibadah/create')->assertForbidden();
 
         $this->flushSession();
         $this->actingAs(User::where('email', 'penyambut@gktsinai.test')->firstOrFail());
