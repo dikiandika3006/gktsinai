@@ -325,6 +325,9 @@ class MemberResource extends Resource
         return [
             EventsRelationManager::class,
             CommissionsRelationManager::class,
+            RelationManagers\VisitsRelationManager::class,
+            RelationManagers\AttendancesRelationManager::class,
+            RelationManagers\ServiceAssignmentsRelationManager::class,
         ];
     }
 

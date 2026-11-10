@@ -89,6 +89,18 @@ class Member extends Model
         return $this->hasMany(Visit::class);
     }
 
+    /** Semua kunjungan ke KK jemaat ini (termasuk kunjungan khusus ke dirinya, karena family_id ikut terisi). */
+    public function kunjunganKeluarga(): HasMany
+    {
+        return $this->hasMany(Visit::class, 'family_id', 'family_id');
+    }
+
+    /** Tugas pelayanan di jadwal ibadah. */
+    public function serviceAssignments(): HasMany
+    {
+        return $this->hasMany(ServiceAssignment::class);
+    }
+
     // ---- Atribut turunan (tidak disimpan) ----
 
     public function getAgeAttribute(): ?int
