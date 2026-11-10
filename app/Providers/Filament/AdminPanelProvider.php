@@ -32,12 +32,15 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->profile()
-            ->brandName('SIJ GKT Sinai Batu')
+            ->brandName('Sistem Informasi Jemaat')
+            ->brandLogo(fn () => view('filament.brand'))
+            ->brandLogoHeight('2.75rem')
+            ->favicon(asset('logo-gkt.png'))
             ->colors([
                 'primary' => Color::Indigo,
             ])
             ->multiFactorAuthentication(
-                [AppAuthentication::make()->recoverable()->brandName('SIJ GKT Sinai Batu')],
+                [AppAuthentication::make()->recoverable()->brandName('Sistem Informasi Jemaat GKT Sinai Batu')],
                 isRequired: fn () => (bool) auth()->user()?->hasAnyRole(['super_admin', 'pendeta']),
             )
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.leaflet-assets'))

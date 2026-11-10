@@ -42,7 +42,12 @@ class MemberImporter
         'atestasi_keluar_date' => ['Tanggal atestasi keluar', ['atestasi keluar', 'tgl atestasi keluar']],
         'atestasi_keluar_church' => ['Gereja tujuan atestasi keluar', ['gereja tujuan']],
         'death_date' => ['Tanggal wafat', ['tgl wafat', 'tanggal wafat', 'wafat', 'meninggal']],
+        'baptized_at_gkt' => ['Baptis di GKT (1/0)', ['baptis di gkt']],
+        'confirmed_at_gkt' => ['Sidi di GKT (1/0)', ['sidi di gkt']],
     ];
+
+    /** Nilai ID KK yang berarti "tidak punya KK". */
+    private const KK_KOSONG = '/^(belum|tidak|tanpa)\b/i';
 
     /** Pemetaan status lama (bagian 5 SRS). */
     public const STATUS_LAMA = [
@@ -165,7 +170,11 @@ class MemberImporter
         $d['atestasi_keluar_church'] = $ambil('atestasi_keluar_church');
 
         $d['region_raw'] = $ambil('region');
-        $d['family_code'] = $ambil('family_code') ? strtoupper(str_replace(' ', '', (string) $ambil('family_code'))) : null;
+        $kk = $ambil('family_code') !== null ? trim((string) $ambil('family_code')) : null;
+        $d['legacy_family_code'] = $kk;
+        $d['family_code'] = ($kk && ! preg_match(self::KK_KOSONG, $kk)) ? strtoupper(str_replace(' ', '', $kk)) : null;
+        $d['baptized_at_gkt'] = in_array(Str::lower((string) $ambil('baptized_at_gkt')), ['1', 'ya', 'y', 'true'], true);
+        $d['confirmed_at_gkt'] = in_array(Str::lower((string) $ambil('confirmed_at_gkt')), ['1', 'ya', 'y', 'true'], true);
 
         $h = Str::lower((string) $ambil('family_relation'));
         $d['family_relation'] = match (true) {
@@ -178,6 +187,7 @@ class MemberImporter
             default => null,
         };
 
+        $d['legacy_status'] = $ambil('status') !== null ? (string) $ambil('status') : null;
         $status = Str::of((string) $ambil('status'))->lower()->squish()->value();
         [$d['membership_status'], $d['activity_status']] = self::STATUS_LAMA[$status] ?? ['simpatisan', 'aktif'];
         if ($status !== '' && ! isset(self::STATUS_LAMA[$status])) {
@@ -240,7 +250,7 @@ class MemberImporter
             return null;
         }
         $bersih = Str::of($raw)->replaceMatches('/[^\pL\s]/u', '')->squish()->title()->value();
-        if ($bersih === '' || preg_match('/belum (di)?definisikan|tidak diketahui/i', $bersih)) {
+        if ($bersih === '' || preg_match('/belum (di)?definisikan|belum ada|tidak diketahui/i', $bersih)) {
             return null;
         }
         $key = Str::lower($bersih);
@@ -354,6 +364,13 @@ class MemberImporter
                         'activity_status' => $d['activity_status'],
                         'marriage_date' => $d['marriage_date'] ?? $member->marriage_date,
                         'death_date' => $d['death_date'] ?? $member->death_date,
+                        'baptized_at_gkt' => $d['baptized_at_gkt'],
+                        'confirmed_at_gkt' => $d['confirmed_at_gkt'],
+                        'legacy_status' => $d['legacy_status'] ?? $member->legacy_status,
+                        'legacy_region' => $d['region_raw'] ?? $member->legacy_region,
+                        'legacy_family_code' => $d['legacy_family_code'] ?? $member->legacy_family_code,
+                        // Alamat disimpan juga per orang: tidak hilang walau tanpa KK atau beda dari alamat KK.
+                        'legacy_address' => $d['address'] ?? $member->legacy_address,
                     ]);
                     $member->save();
 

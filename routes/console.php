@@ -12,6 +12,36 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 
+// Import data jemaat dari Excel lama. --fresh menghapus data jemaat/KK/kehadiran/tamu/visitasi (mis. data demo) dulu.
+Artisan::command('sij:import-excel {file} {--sheet=0} {--fresh}', function (\App\Services\MemberImporter $importer) {
+    $file = $this->argument('file');
+    if (! is_file($file)) {
+        $this->error("File tidak ditemukan: {$file}");
+
+        return 1;
+    }
+    if ($this->option('fresh')) {
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        foreach (['visit_reports', 'visit_user', 'visits', 'guest_followups', 'attendances', 'guests', 'activity_sessions',
+            'commission_members', 'member_events', 'members', 'families', 'audit_logs'] as $t) {
+            \Illuminate\Support\Facades\DB::table($t)->truncate();
+        }
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+        $this->info('Data lama dihapus.');
+    }
+
+    $baca = $importer->read($file, (int) $this->option('sheet'));
+    $map = $importer->guessMapping($baca['headings']);
+    $tidakTerpetakan = array_diff_key($baca['headings'], array_flip(array_filter($map, fn ($i) => $i !== null)));
+    $this->line('Kolom tidak dipetakan: '.(implode(', ', $tidakTerpetakan) ?: '-'));
+
+    $hasil = $importer->import($baca['rows'], $map);
+    $this->info("Baru: {$hasil['created']}, diperbarui: {$hasil['updated']}, gagal: ".count($hasil['failed']));
+    foreach ($hasil['failed'] as $f) {
+        $this->warn("Baris {$f['line']} ({$f['name']}): {$f['error']}");
+    }
+})->purpose('Import data jemaat dari Excel');
+
 // TF-07: pengingat PIC yang FU-nya lewat batas waktu.
 Artisan::command('sij:fu-reminder', function () {
     $terlambat = Guest::where('fu_stage', 'baru')->where('fu_due_at', '<', now())->get();

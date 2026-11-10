@@ -28,6 +28,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -122,7 +123,15 @@ class MemberResource extends Resource
                 DatePicker::make('marriage_date')->label('Tanggal pernikahan'),
                 DatePicker::make('death_date')->label('Tanggal wafat')
                     ->visible(fn (Get $get) => $get('membership_status') === 'meninggal'),
+                Toggle::make('baptized_at_gkt')->label('Baptis di GKT'),
+                Toggle::make('confirmed_at_gkt')->label('Sidi di GKT'),
                 Textarea::make('notes')->label('Catatan')->columnSpanFull()->rows(2),
+            ]),
+            Section::make('Data asli Excel (lama)')->columns(3)->collapsed()->schema([
+                TextInput::make('legacy_status')->label('Kategori / Status Jemaat'),
+                TextInput::make('legacy_region')->label('Wilayah'),
+                TextInput::make('legacy_family_code')->label('ID KK'),
+                Textarea::make('legacy_address')->label('Alamat')->columnSpanFull()->rows(2),
             ]),
         ]);
     }
@@ -161,7 +170,15 @@ class MemberResource extends Resource
                 TextEntry::make('death_date')->label('Wafat')->date('d/m/Y')->visible(fn (Member $r) => (bool) $r->death_date),
                 TextEntry::make('suggested')->label('Usulan komisi (umur & kelamin)')
                     ->state(fn (Member $r) => $r->suggestedCommissions()->pluck('name')->join(', ') ?: '-'),
+                TextEntry::make('baptized_at_gkt')->label('Baptis di GKT')->formatStateUsing(fn ($state) => $state ? 'Ya' : 'Tidak'),
+                TextEntry::make('confirmed_at_gkt')->label('Sidi di GKT')->formatStateUsing(fn ($state) => $state ? 'Ya' : 'Tidak'),
                 TextEntry::make('notes')->label('Catatan')->columnSpanFull(),
+            ]),
+            Section::make('Data asli Excel (lama)')->columns(4)->collapsed()->schema([
+                TextEntry::make('legacy_status')->label('Kategori / Status Jemaat'),
+                TextEntry::make('legacy_region')->label('Wilayah'),
+                TextEntry::make('legacy_family_code')->label('ID KK'),
+                TextEntry::make('legacy_address')->label('Alamat')->visible($kontak),
             ]),
         ]);
     }

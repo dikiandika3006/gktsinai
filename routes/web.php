@@ -23,7 +23,7 @@ Route::post('/c/{token}', [SelfCheckinController::class, 'store'])->middleware('
 Route::middleware('auth')->group(function () {
     // KH-03: absensi oleh petugas (PWA)
     Route::get('/absen', [AbsenController::class, 'index'])->name('absen.index');
-    Route::post('/absen/sesi', [AbsenController::class, 'createSession'])->name('absen.create-session');
+    Route::post('/absen/buka', [AbsenController::class, 'open'])->name('absen.open');
     Route::get('/absen/{session}', [AbsenController::class, 'show'])->name('absen.session');
     Route::get('/absen/{session}/data', [AbsenController::class, 'data'])->name('absen.data');
     Route::post('/absen/{session}/sync', [AbsenController::class, 'sync'])->name('absen.sync');

@@ -25,6 +25,8 @@ class Member extends Model
             'marriage_date' => 'date',
             'death_date' => 'date',
             'joined_at' => 'date',
+            'baptized_at_gkt' => 'boolean',
+            'confirmed_at_gkt' => 'boolean',
         ];
     }
 

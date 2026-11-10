@@ -55,6 +55,16 @@ class SmokeTest extends TestCase
         }
     }
 
+    public function test_maintenance_page_super_admin_only(): void
+    {
+        $this->actingAs($this->user('admin@gktsinai.test'));
+        $this->get('/admin/pemeliharaan')->assertOk()->assertSee('Status database');
+
+        $this->flushSession();
+        $this->actingAs($this->user('sekretariat@gktsinai.test'));
+        $this->get('/admin/pemeliharaan')->assertForbidden();
+    }
+
     public function test_role_restrictions(): void
     {
         $this->actingAs($this->user('penyambut@gktsinai.test'));
@@ -66,6 +76,7 @@ class SmokeTest extends TestCase
         $this->actingAs($this->user('majelis@gktsinai.test'));
         $this->get('/admin/members')->assertOk();
         $this->get('/admin/import-jemaat')->assertForbidden();
+        $this->get('/admin/pemeliharaan')->assertForbidden();
         $this->get('/pdf/rekap')->assertForbidden();
 
         // Catatan rahasia hanya terbaca pendeta & penulis.
@@ -99,7 +110,12 @@ class SmokeTest extends TestCase
     public function test_staff_sync_and_member_code(): void
     {
         $this->actingAs($this->user('penyambut@gktsinai.test'));
-        $s = ActivitySession::latest('id')->first();
+        // Pilih tanggal + ibadah: sesi dibuat otomatis sekali saja.
+        $type = \App\Models\ActivityType::where('is_general_worship', true)->value('id');
+        $open = $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-06'])->assertOk()->json();
+        $this->assertSame($open['id'], $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-06'])->json('id'));
+        $this->getJson($open['data_url'])->assertOk()->assertJsonStructure(['members' => [['id', 'n', 'fh']], 'present']);
+        $s = ActivitySession::find($open['id']);
         $ids = Member::aktif()->limit(3)->pluck('id');
         $this->postJson("/absen/{$s->id}/sync", ['items' => $ids->map(fn ($id) => ['member_id' => $id, 'at' => now()->toIso8601String()])->all()])
             ->assertOk()->assertJson(['ok' => true]);

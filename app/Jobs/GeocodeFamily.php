@@ -61,7 +61,7 @@ class GeocodeFamily implements ShouldQueue
 
     private function nominatim(string $query): array
     {
-        $res = Http::withHeaders(['User-Agent' => 'SIJ-Gereja/1.0'])
+        $res = Http::withHeaders(['User-Agent' => 'SistemInformasiJemaat/1.0'])
             ->timeout(20)
             ->get(config('sij.nominatim_url'), array_filter([
                 'q' => $query,

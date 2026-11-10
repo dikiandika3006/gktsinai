@@ -35,40 +35,60 @@ class AbsenController extends Controller
         abort_unless($this->allowedTypes()->contains('id', $session->activity_type_id), 403);
     }
 
-    public function index()
+    /** Satu layar absensi: pilih tanggal & ibadah, cari nama, klik. */
+    public function index(Request $request, ?ActivitySession $preset = null)
     {
         $this->authorizeStaff();
         $types = $this->allowedTypes();
-        $sessions = ActivitySession::with('activityType')->withCount('attendances')
-            ->whereIn('activity_type_id', $types->pluck('id'))
-            ->whereBetween('date', [today()->subDays(7), today()->addDays(7)])
-            ->orderByDesc('date')->orderBy('start_time')->get();
+        abort_if($types->isEmpty(), 403, 'Belum ada jenis ibadah yang bisa Anda absen.');
 
-        return view('absen.index', compact('sessions', 'types'));
+        // Default: Ibadah Umum hari ini (atau Minggu terdekat yang sudah lewat).
+        $defaultDate = today()->isSunday() ? today() : today()->previous(\Carbon\Carbon::SUNDAY);
+
+        return view('absen.index', [
+            'types' => $types->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'count_only' => (bool) $t->count_only])->values(),
+            'presetType' => $preset?->activity_type_id ?? $request->integer('type') ?: $types->first()->id,
+            'presetDate' => $preset?->date?->toDateString() ?? $request->query('date', $defaultDate->toDateString()),
+        ]);
     }
 
-    public function createSession(Request $request)
+    /** Buka (atau buat otomatis) sesi untuk ibadah + tanggal terpilih. */
+    public function open(Request $request)
     {
         $this->authorizeStaff();
         $data = $request->validate([
-            'activity_type_id' => 'required|exists:activity_types,id',
+            'activity_type_id' => 'required|integer|exists:activity_types,id',
             'date' => 'required|date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i',
-            'location' => 'nullable|string|max:255',
         ]);
-        abort_unless($this->allowedTypes()->contains('id', (int) $data['activity_type_id']), 403);
-        $session = ActivitySession::create($data);
+        $type = $this->allowedTypes()->firstWhere('id', (int) $data['activity_type_id']);
+        abort_unless($type, 403);
 
-        return redirect()->route('absen.session', $session);
+        $session = ActivitySession::query()->where('activity_type_id', $type->id)->whereDate('date', $data['date'])->orderBy('id')->first()
+            ?? ActivitySession::create([
+                'activity_type_id' => $type->id,
+                'date' => $data['date'],
+                'start_time' => '07:00',
+                'end_time' => '09:00',
+                'location' => 'Gedung Gereja',
+            ]);
+
+        return response()->json([
+            'id' => $session->id,
+            'count_only' => $session->isCountOnly(),
+            'manual_count' => $session->manual_count,
+            'data_url' => route('absen.data', $session),
+            'sync_url' => route('absen.sync', $session),
+            'count_url' => route('absen.count', $session),
+            'qr_url' => route('sessions.qr', $session),
+            'guest_url' => route('tamu.create', ['sesi' => $session->qr_token]),
+        ]);
     }
 
-    public function show(ActivitySession $session)
+    public function show(Request $request, ActivitySession $session)
     {
         $this->authorizeSession($session);
-        $session->load('activityType');
 
-        return view('absen.session', ['session' => $session]);
+        return $this->index($request, $session);
     }
 
     /** Daftar jemaat untuk dicentang (disimpan juga di HP agar bisa offline). */

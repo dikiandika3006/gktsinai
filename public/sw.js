@@ -1,5 +1,5 @@
 // Service worker PWA absensi: halaman absensi tetap terbuka saat sinyal lemah.
-const CACHE = 'sij-absen-v1';
+const CACHE = 'sij-absen-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
@@ -14,7 +14,7 @@ self.addEventListener('fetch', (e) => {
     if (url.origin !== location.origin) return;
 
     // Aset hasil build: cache-first.
-    if (url.pathname.startsWith('/build/') || url.pathname === '/icon.svg') {
+    if (url.pathname.includes('/build/') || url.pathname.endsWith('.png')) {
         e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(req, copy));
@@ -24,7 +24,7 @@ self.addEventListener('fetch', (e) => {
     }
 
     // Halaman absensi & datanya: network-first, fallback ke cache.
-    if (url.pathname.startsWith('/absen')) {
+    if (url.pathname.includes('/absen')) {
         e.respondWith(fetch(req).then((res) => {
             if (res.ok) {
                 const copy = res.clone();

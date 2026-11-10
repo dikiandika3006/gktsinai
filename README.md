@@ -1,4 +1,4 @@
-# Sistem Informasi Jemaat (SIJ) - GKT Jemaat Sinai Batu
+# Sistem Informasi Jemaat - GKT Jemaat Sinai Batu
 
 Aplikasi web untuk mengelola data jemaat, pertumbuhan, kehadiran, tamu & follow-up, visitasi, dan peta persebaran jemaat.
 Dibangun sesuai `SRS/SRS_Sistem_Informasi_Jemaat_GKT_Sinai_Batu.docx`.

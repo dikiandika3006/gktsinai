@@ -6,7 +6,8 @@
     @if (! $open)
         <div class="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200">
             <p class="text-lg font-semibold">Check-in belum dibuka atau sudah ditutup.</p>
-            <p class="mt-1 text-slate-500">Check-in mandiri hanya berlaku selama jam ibadah. Silakan menghubungi petugas penyambut.</p>
+            @php([$buka, $tutup] = $session->checkinWindow())
+            <p class="mt-1 text-slate-500">Check-in mandiri untuk sesi ini dibuka {{ $buka->translatedFormat('d F Y') }} pukul {{ $buka->format('H:i') }} - {{ $tutup->format('H:i') }}. Silakan menghubungi petugas penyambut.</p>
         </div>
     @else
         <div id="step-search">

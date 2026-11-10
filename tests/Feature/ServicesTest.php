@@ -79,6 +79,14 @@ class ServicesTest extends TestCase
         $this->assertSame('Pujon', $opa->family->region->name);
         $this->assertNull(Member::where('code', 'SIB0386')->first()->family->region_id);
         $this->assertSame('keluar', Member::where('code', 'SIB0386')->value('membership_status'));
+
+        // Kolom asli Excel tetap tersimpan.
+        $this->assertSame('Jemaat Aktif', $budi->legacy_status);
+        $this->assertSame('Pesangrgahan', $budi->legacy_region);
+        $this->assertSame('KK-001', $budi->legacy_family_code);
+        $this->assertSame('Jl. Anggrek 5', $budi->legacy_address);
+        $this->assertFalse($budi->baptized_at_gkt);
+        $this->assertSame('Belum Didefinisikan', Member::where('code', 'SIB0386')->value('legacy_region'));
         $this->assertSame(2, MemberEvent::where('member_id', $budi->id)->where('data_status', 'belum_diketahui')->count());
 
         // DJ-02: kode berikutnya melanjutkan nomor terakhir.
