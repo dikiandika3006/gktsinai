@@ -127,9 +127,24 @@ class FamilyResource extends Resource
 
         return $table
             ->defaultSort('code')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('members:id,family_id,name,alias,code'))
+            ->searchPlaceholder('Cari ID KK, nama / alias anggota, alamat')
             ->columns([
                 TextColumn::make('code')->label('ID KK')->sortable()->searchable(),
-                TextColumn::make('head.name')->label('Kepala keluarga')->searchable(),
+                // Cari lewat nama/alias/kode SIB semua anggota KK, bukan hanya kepala keluarga.
+                TextColumn::make('head.name')->label('Kepala keluarga')
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('members', fn ($m) => $m->search($search)))
+                    ->description(function (Family $record, $livewire) {
+                        $cari = mb_strtolower(trim((string) $livewire->getTableSearch()));
+                        if ($cari === '') {
+                            return null;
+                        }
+                        $cocok = $record->members->filter(fn ($m) => $m->id !== $record->head_member_id && (
+                            str_contains(mb_strtolower($m->name), $cari) || str_contains(mb_strtolower((string) $m->alias), $cari)
+                            || str_contains(mb_strtolower((string) $m->code), $cari)));
+
+                        return $cocok->isEmpty() ? null : 'Anggota: '.$cocok->pluck('name')->join(', ');
+                    }),
                 TextColumn::make('address')->label('Alamat')->limit(40)->searchable()->visible($kontak)->wrap(),
                 TextColumn::make('region.name')->label('Wilayah')->sortable(),
                 TextColumn::make('members_count')->label('Anggota')->sortable(),
