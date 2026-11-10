@@ -1,8 +1,25 @@
 <x-filament-panels::page>
-    <x-filament::section heading="Usulan visitasi ({{ $usulan->count() }})"
+    <x-filament::section heading="Usulan visitasi ({{ $usulan->count() === $semua ? $semua : $usulan->count().' dari '.$semua }})"
         description="Dari: jemaat tidak hadir 3x berturut-turut, jemaat baru, lansia {{ config('sij.elderly_age') }}+, dan KK yang belum dikunjungi > {{ config('sij.visit_overdue_months') }} bulan. KK yang sudah dijadwalkan tidak ditampilkan.">
+        <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.9rem">
+            <x-filament::input.wrapper prefix-icon="heroicon-m-magnifying-glass" style="flex:1;min-width:14rem">
+                <x-filament::input type="search" wire:model.live.debounce.300ms="cari" placeholder="Cari nama KK, anggota keluarga, kode KK, atau alasan..." />
+            </x-filament::input.wrapper>
+            <x-filament::input.wrapper style="min-width:11rem">
+                <x-filament::input.select wire:model.live="wilayah">
+                    <option value="">Semua wilayah</option>
+                    @foreach ($wilayahOpsi as $w) <option value="{{ $w }}">{{ $w }}</option> @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
+            <x-filament::input.wrapper style="min-width:11rem">
+                <x-filament::input.select wire:model.live="jenis">
+                    <option value="">Semua alasan</option>
+                    @foreach ($jenisOpsi as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
+        </div>
         @if ($usulan->isEmpty())
-            <p style="opacity:.7">Tidak ada usulan.</p>
+            <p style="opacity:.7">{{ $semua ? 'Tidak ada usulan yang cocok dengan pencarian.' : 'Tidak ada usulan.' }}</p>
         @else
             <div style="overflow-x:auto;max-height:560px">
             <table style="width:100%;font-size:.875rem;border-collapse:collapse">

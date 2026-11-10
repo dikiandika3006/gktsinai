@@ -6,6 +6,7 @@ use App\Models\Family;
 use App\Models\Region;
 use App\Models\Visit;
 use App\Services\VisitSuggestionService;
+use App\Support\Opsi;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -25,6 +26,12 @@ class UsulanVisitasi extends Page
 
     public int $tahun;
 
+    public string $cari = '';
+
+    public string $wilayah = '';
+
+    public string $jenis = '';
+
     public function mount(): void
     {
         $this->tahun = now()->year;
@@ -40,6 +47,24 @@ class UsulanVisitasi extends Page
         $visible = Family::query()->visibleTo(auth()->user())->pluck('id')->flip();
         $usulan = app(VisitSuggestionService::class)->suggestions()
             ->filter(fn ($r) => $visible->has($r['family']->id))->values();
+        $semua = $usulan->count();
+        $jenisOpsi = $usulan->countBy('type')->mapWithKeys(fn ($n, $k) => [$k => Opsi::label(Opsi::JENIS_VISITASI, $k)." ($n)"])->all();
+        $wilayahOpsi = $usulan->map(fn ($r) => $r['family']->region?->name)->filter()->unique()->sort()->values()->all();
+
+        // Pencarian: kode/nama KK, nama anggota keluarga, wilayah, atau alasan.
+        $cari = trim($this->cari);
+        if ($cari !== '') {
+            $kkAnggota = Family::query()->whereIn('id', $usulan->pluck('family.id'))
+                ->whereHas('members', fn ($query) => $query->where('name', 'like', "%{$cari}%")->orWhere('alias', 'like', "%{$cari}%"))
+                ->pluck('id')->flip();
+            $c = mb_strtolower($cari);
+            $usulan = $usulan->filter(fn ($r) => $kkAnggota->has($r['family']->id)
+                || str_contains(mb_strtolower($r['family']->display_name.' '.$r['family']->region?->name.' '.$r['reason']), $c));
+        }
+        $usulan = $usulan
+            ->when($this->wilayah !== '', fn ($c) => $c->filter(fn ($r) => $r['family']->region?->name === $this->wilayah))
+            ->when($this->jenis !== '', fn ($c) => $c->where('type', $this->jenis))
+            ->values();
 
         // VS-07
         $cakupan = Region::orderBy('name')->get()->map(function (Region $r) {
@@ -53,6 +78,9 @@ class UsulanVisitasi extends Page
 
         return [
             'usulan' => $usulan,
+            'semua' => $semua,
+            'jenisOpsi' => $jenisOpsi,
+            'wilayahOpsi' => $wilayahOpsi,
             'cakupan' => $cakupan,
             'bisaJadwal' => auth()->user()->can('create', Visit::class),
             'tahunOpsi' => range(now()->year, now()->year - 4),
