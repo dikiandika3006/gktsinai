@@ -96,6 +96,11 @@ class Member extends Model
     }
 
     /** Tugas pelayanan di jadwal ibadah. */
+    public function orgPositions(): HasMany
+    {
+        return $this->hasMany(OrgPosition::class);
+    }
+
     public function serviceAssignments(): HasMany
     {
         return $this->hasMany(ServiceAssignment::class);

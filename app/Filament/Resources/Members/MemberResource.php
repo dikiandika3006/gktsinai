@@ -328,6 +328,7 @@ class MemberResource extends Resource
             RelationManagers\VisitsRelationManager::class,
             RelationManagers\AttendancesRelationManager::class,
             RelationManagers\ServiceAssignmentsRelationManager::class,
+            RelationManagers\OrgPositionsRelationManager::class,
         ];
     }
 

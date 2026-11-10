@@ -125,6 +125,34 @@ class Opsi
         'penyambut' => 'Penyambut & Kolektan',
     ];
 
+    /** Jenis unit di struktur organisasi. */
+    public const JENIS_UNIT = [
+        'pimpinan' => 'Pimpinan',
+        'sekretariat' => 'Sekretariat',
+        'bidang' => 'Bidang',
+        'sub_bidang' => 'Sub-bidang',
+        'komisi' => 'Komisi',
+        'tim' => 'Tim',
+    ];
+
+    /** Jabatan di struktur organisasi. */
+    public const JABATAN = [
+        'gembala' => 'Gembala Sidang',
+        'ketua_majelis' => 'Ketua Majelis',
+        'sekretaris_mj' => 'Sekretaris Majelis',
+        'penatua' => 'Penatua',
+        'penatua_pj' => 'Penatua Penanggung Jawab',
+        'majelis_pendamping' => 'Majelis Pendamping',
+        'hamba_tuhan' => 'Hamba Tuhan',
+        'ketua' => 'Ketua',
+        'wakil' => 'Wakil Ketua',
+        'sekretaris' => 'Sekretaris',
+        'bendahara' => 'Bendahara',
+        'koordinator' => 'Koordinator',
+        'anggota' => 'Anggota',
+        'staf' => 'Staf',
+    ];
+
     /** Kategori pelayan yang belum terdaftar di data jemaat. */
     public const KATEGORI_PELAYAN = [
         'simpatisan' => 'Simpatisan (belum didata)',

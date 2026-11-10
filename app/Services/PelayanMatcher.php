@@ -135,7 +135,7 @@ class PelayanMatcher
             foreach ($token as $i => $t) {
                 $ok = false;
                 foreach ($m['kata'] as $w) {
-                    if ($w === $t || (($inisial[$i] || ($awalan && strlen($t) >= 4)) && str_starts_with($w, $t))) {
+                    if ($w === $t || (($inisial[$i] || ($awalan && strlen($t) >= 6)) && str_starts_with($w, $t))) {
                         $ok = true;
                         break;
                     }
