@@ -41,9 +41,14 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.75rem')
             ->favicon(asset('logo-gkt.png'))
+            // Warna dari logo GKT: hijau (utama), emas (peringatan/aksen).
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::hex('#1f7a4d'),
+                'warning' => Color::Amber,
+                'info' => Color::Sky,
             ])
+            ->font('Plus Jakarta Sans', provider: \Filament\FontProviders\GoogleFontProvider::class)
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.leaflet-assets'))
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('filament.menu-search'))
             ->databaseNotifications()

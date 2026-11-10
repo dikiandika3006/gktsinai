@@ -1,0 +1,228 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/*
+ * Tema GKT Sinai Batu: hijau (primary, dari logo) + aksen emas & marun.
+ * Ikon menu diberi warna per grup agar mudah dikenali.
+ */
+:root {
+    --sinai-emas: #d99a1e;
+    --sinai-marun: #8b1e2b;
+    --sinai-latar: #f5f7f3;
+}
+
+.dark {
+    --sinai-latar: #0e1311;
+}
+
+/* ---------- Latar & kartu ---------- */
+.fi-body {
+    background: var(--sinai-latar);
+    word-spacing: .08em; /* spasi antarkata Plus Jakarta Sans cukup sempit */
+}
+
+.fi-section,
+.fi-wi-stats-overview-stat,
+.fi-ta-ctn {
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 6px 20px -12px rgb(22 101 52 / .18);
+}
+
+/* Garis emas tipis di bawah topbar */
+.fi-topbar {
+    box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--sinai-emas) 55%, transparent);
+}
+
+/* ---------- Sidebar ---------- */
+.fi-sidebar {
+    background: linear-gradient(180deg, #eef6f0 0%, #f8f7ef 100%);
+    border-right: 1px solid rgb(22 101 52 / .08);
+}
+
+.dark .fi-sidebar {
+    background: linear-gradient(180deg, #0f1d16 0%, #121512 100%);
+    border-right-color: rgb(255 255 255 / .05);
+}
+
+/* Warna per grup menu */
+.fi-sidebar-group {
+    --grp: var(--primary-600);
+}
+.fi-sidebar-group[data-group-label='Jemaat'] { --grp: #2563eb; }
+.fi-sidebar-group[data-group-label='Ibadah & Kehadiran'] { --grp: #059669; }
+.fi-sidebar-group[data-group-label='Pelayanan'] { --grp: #7c3aed; }
+.fi-sidebar-group[data-group-label='Pastoral'] { --grp: #ea580c; }
+.fi-sidebar-group[data-group-label='Laporan'] { --grp: #0d9488; }
+.fi-sidebar-group[data-group-label='Pengaturan'] { --grp: #64748b; }
+
+.dark .fi-sidebar-group[data-group-label='Jemaat'] { --grp: #60a5fa; }
+.dark .fi-sidebar-group[data-group-label='Ibadah & Kehadiran'] { --grp: #34d399; }
+.dark .fi-sidebar-group[data-group-label='Pelayanan'] { --grp: #a78bfa; }
+.dark .fi-sidebar-group[data-group-label='Pastoral'] { --grp: #fb923c; }
+.dark .fi-sidebar-group[data-group-label='Laporan'] { --grp: #2dd4bf; }
+.dark .fi-sidebar-group[data-group-label='Pengaturan'] { --grp: #94a3b8; }
+
+.fi-sidebar-group-label {
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--grp);
+}
+
+.fi-sidebar-item-btn {
+    border-radius: .65rem;
+    transition: background-color .15s;
+}
+
+.fi-sidebar-item-btn:hover {
+    background: color-mix(in oklab, var(--grp) 10%, transparent);
+}
+
+.fi-sidebar-item-icon {
+    color: var(--grp) !important;
+    background: color-mix(in oklab, var(--grp) 13%, transparent);
+    border-radius: .5rem;
+    padding: .3rem;
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    box-sizing: border-box;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background: var(--grp);
+    box-shadow: 0 6px 14px -8px var(--grp);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label {
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon {
+    color: #fff !important;
+    background: rgb(255 255 255 / .2);
+}
+
+/* ---------- Kartu angka dashboard ---------- */
+.fi-wi-stats-overview-stat {
+    --stat: var(--primary-600);
+    border-top: 4px solid var(--stat);
+    position: relative;
+    overflow: hidden;
+}
+
+.fi-wi-stats-overview-stat::after {
+    content: '';
+    position: absolute;
+    right: -2.5rem;
+    top: -2.5rem;
+    width: 7rem;
+    height: 7rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--stat) 9%, transparent);
+    pointer-events: none;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label-ctn > .fi-icon {
+    color: var(--stat);
+    background: color-mix(in oklab, var(--stat) 14%, transparent);
+    border-radius: 999px;
+    padding: .35rem;
+    width: 2rem;
+    height: 2rem;
+    box-sizing: border-box;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+    font-size: 2.1rem;
+    letter-spacing: -.02em;
+}
+
+/* ---------- Banner sapaan ---------- */
+.sinai-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    padding: 1.6rem 1.75rem;
+    color: #fff;
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgb(217 154 30 / .55) 0%, transparent 55%),
+        linear-gradient(120deg, #14532d 0%, #1f7a4d 55%, #2f8f5b 100%);
+    box-shadow: 0 14px 30px -18px rgb(20 83 45 / .7);
+}
+
+.sinai-banner::before {
+    content: '';
+    position: absolute;
+    right: 1.5rem;
+    bottom: -1.5rem;
+    width: 9rem;
+    height: 9rem;
+    background: var(--sinai-logo) center / contain no-repeat; /* diisi dari blade (asset URL) */
+    mix-blend-mode: multiply; /* latar putih logo menyatu dengan banner */
+    opacity: .35;
+    pointer-events: none;
+}
+
+.sinai-banner h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+}
+
+.sinai-banner .sinai-sub {
+    opacity: .85;
+    margin-top: .25rem;
+}
+
+.sinai-banner .sinai-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .9rem;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / .14);
+    border: 1px solid rgb(255 255 255 / .22);
+    font-size: .82rem;
+}
+
+.sinai-aksi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-top: 1.1rem;
+    position: relative;
+}
+
+.sinai-aksi a {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .55rem .95rem;
+    border-radius: .75rem;
+    background: #fff;
+    color: #14532d;
+    font-weight: 600;
+    font-size: .85rem;
+    box-shadow: 0 4px 12px -6px rgb(0 0 0 / .35);
+    transition: transform .12s;
+}
+
+.sinai-aksi a:hover {
+    transform: translateY(-1px);
+}
+
+.sinai-aksi a.sinai-emas {
+    background: var(--sinai-emas);
+    color: #fff;
+}
+
+.sinai-aksi svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}

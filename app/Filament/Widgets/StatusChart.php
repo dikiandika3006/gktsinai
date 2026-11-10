@@ -26,7 +26,7 @@ class StatusChart extends ChartWidget
         return [
             'datasets' => [[
                 'data' => array_values($s),
-                'backgroundColor' => ['#4f46e5', '#16a34a', '#0891b2', '#d97706', '#9ca3af', '#6b7280'],
+                'backgroundColor' => ['#1f7a4d', '#6cc08b', '#d99a1e', '#8b1e2b', '#9ca3af', '#64748b'], 'borderWidth' => 2,
             ]],
             'labels' => array_keys($s),
         ];

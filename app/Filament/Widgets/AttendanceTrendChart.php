@@ -65,15 +65,15 @@ class AttendanceTrendChart extends ChartWidget
     protected function getData(): array
     {
         $d = self::data();
-        $warna = ['#4f46e5', '#0891b2', '#d97706', '#16a34a', '#db2777'];
+        $warna = ['#1f7a4d', '#d99a1e', '#2563eb', '#8b1e2b', '#7c3aed'];
         $datasets = [];
         $i = 0;
         foreach ($d['perKebaktian'] as $k => $nilai) {
             $datasets[] = ['label' => $k, 'data' => $nilai, 'borderColor' => $warna[$i++ % 5], 'spanGaps' => true, 'tension' => .25];
         }
         if (count($d['perKebaktian']) > 1) {
-            $datasets[] = ['label' => 'Total hari itu (jemaat dihitung 1x)', 'data' => $d['total'], 'borderColor' => '#111827',
-                'backgroundColor' => 'rgba(17,24,39,.06)', 'fill' => true, 'borderWidth' => 3, 'tension' => .25];
+            $datasets[] = ['label' => 'Total hari itu (jemaat dihitung 1x)', 'data' => $d['total'], 'borderColor' => '#14532d',
+                'backgroundColor' => 'rgba(31,122,77,.08)', 'fill' => true, 'borderWidth' => 3, 'tension' => .25];
         }
 
         return ['datasets' => $datasets, 'labels' => $d['labels']];

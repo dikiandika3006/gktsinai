@@ -36,8 +36,8 @@ class GrowthChart extends ChartWidget
 
         return [
             'datasets' => [
-                ['label' => 'Masuk', 'data' => array_column($series, 'masuk'), 'backgroundColor' => '#16a34a'],
-                ['label' => 'Keluar', 'data' => array_map(fn ($r) => -$r['keluar'], $series), 'backgroundColor' => '#dc2626'],
+                ['label' => 'Masuk', 'data' => array_column($series, 'masuk'), 'backgroundColor' => '#1f7a4d'],
+                ['label' => 'Keluar', 'data' => array_map(fn ($r) => -$r['keluar'], $series), 'backgroundColor' => '#8b1e2b'],
             ],
             'labels' => array_keys($series),
         ];
