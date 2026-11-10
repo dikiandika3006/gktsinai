@@ -81,24 +81,56 @@ class JadwalImporter
             }
         }
 
+        // Bulan & tahun dari judul ("Bulan : Maret 2026"): melengkapi tanggal tanpa tahun dan
+        // mengabaikan kolom sisa salinan dari bulan lain (mis. "30 Agustus" di sheet September).
+        $judul = null;
+        foreach (array_slice($rows, 0, 3) as $row) {
+            foreach ($row as $v) {
+                if (is_string($v) && preg_match("/bulan[^:]*:\s*([a-z]+)\s+(\d{4})/i", $v, $m) && ($n = $this->nomorBulan($m[1]))) {
+                    $judul = [$n, (int) $m[2]];
+                    break 2;
+                }
+            }
+        }
+
         $hasil = [];
-        $blok = null; // ['labelCol' => int, 'tanggal' => [col => Y-m-d]]
+        $blok = null; // ["labelCol" => int, "tanggal" => [col => Y-m-d], "gabungan" => [col => judul ibadah]]
         $labelSebelum = null;
         foreach ($rows as $r => $row) {
             // Baris "Tanggal" memulai blok baru.
             foreach ($row as $c => $v) {
-                if (is_string($v) && preg_match('/^\s*tanggal\s*$/i', $v)) {
+                if (is_string($v) && preg_match("/^\s*tanggal\s*$/i", $v)) {
                     $tgl = [];
+                    $gabungan = [];
                     foreach ($row as $c2 => $v2) {
-                        if ($c2 > $c && ($t = $this->tanggal($v2)) && ! in_array($t, $tgl, true)) {
-                            $tgl[$c2] = $t;
+                        if ($c2 <= $c || ! ($t = $this->tanggal($v2, $judul[1] ?? null)) || in_array($t, $tgl, true)) {
+                            continue;
+                        }
+                        if ($judul && (int) substr($t, 5, 2) !== $judul[0]) {
+                            continue;
+                        }
+                        if ($judul) {
+                            $t = $judul[1].substr($t, 4); // tahun ikut judul sheet (sel tanggal kadang salinan tahun lalu)
+                            if (in_array($t, $tgl, true)) {
+                                continue;
+                            }
+                        }
+                        $tgl[$c2] = $t;
+                        // Baris di bawah tanggal: "Ibadah Umum I / II", atau satu ibadah (Gabungan, Paska, Komisi ...).
+                        $jenis = $this->teks(preg_replace("/\s*\/?\s*pukul.*$/is", "", (string) ($rows[$r + 1][$c2] ?? "")));
+                        $satu = isset($mergeId[$r + 1][$c2]) && $mergeId[$r + 1][$c2] === ($mergeId[$r + 1][$c2 + 1] ?? null);
+                        if (stripos($jenis, "gabungan") !== false || ($satu && stripos($jenis, "umum") === false)) {
+                            $gabungan[$c2] = $jenis ?: "Ibadah Gabungan";
                         }
                     }
                     // Baris kedua sel "Tanggal" yang di-merge (Ibadah Umum I/II) tidak memulai blok baru.
                     if ($tgl) {
-                        $blok = ['labelCol' => $c, 'tanggal' => $tgl];
-                        foreach ($tgl as $t) {
-                            $hasil[$t] ??= ['info' => [], 'petugas' => []];
+                        $blok = ["labelCol" => $c, "tanggal" => $tgl, "gabungan" => $gabungan];
+                        foreach ($tgl as $c2 => $t) {
+                            $hasil[$t] = ["info" => [], "petugas" => []];
+                            if (isset($gabungan[$c2]) && strcasecmp($gabungan[$c2], "Ibadah Gabungan") !== 0) {
+                                $hasil[$t]["ibadah"] = $gabungan[$c2];
+                            }
                         }
                     }
                     $labelSebelum = null;
@@ -106,13 +138,13 @@ class JadwalImporter
                     continue 2;
                 }
             }
-            if (! $blok || ! $blok['tanggal']) {
+            if (! $blok) {
                 continue;
             }
 
-            $labelTeks = trim((string) ($row[$blok['labelCol']] ?? ''));
-            $target = $labelTeks === '' ? $labelSebelum : $this->label($labelTeks);
-            if ($labelTeks !== '' && ! $target && $labelSebelum && ($rows[$r - 1][$blok['labelCol']] ?? null) === $row[$blok['labelCol']]) {
+            $labelTeks = trim((string) ($row[$blok["labelCol"]] ?? ""));
+            $target = $labelTeks === "" ? $labelSebelum : $this->label($labelTeks);
+            if ($labelTeks !== "" && ! $target && $labelSebelum && ($rows[$r - 1][$blok["labelCol"]] ?? null) === $row[$blok["labelCol"]]) {
                 $target = $labelSebelum; // label hasil merge vertikal
             }
             $labelSebelum = $target;
@@ -120,34 +152,51 @@ class JadwalImporter
                 continue;
             }
 
-            foreach ($blok['tanggal'] as $c => $t) {
+            foreach ($blok["tanggal"] as $c => $t) {
                 $ku1 = $this->teks($row[$c] ?? null);
                 $ku2 = $this->teks($row[$c + 1] ?? null);
                 $gabung = isset($mergeId[$r][$c]) && ($mergeId[$r][$c] === ($mergeId[$r][$c + 1] ?? null));
 
-                if ($target[0] === 'info') {
-                    if ($ku1 !== '' && empty($hasil[$t]['info'][$target[1]])) {
-                        $hasil[$t]['info'][$target[1]] = mb_substr($ku1, 0, 255);
+                if ($target[0] === "info") {
+                    if ($ku1 !== "" && empty($hasil[$t]["info"][$target[1]])) {
+                        $hasil[$t]["info"][$target[1]] = mb_substr($ku1, 0, 255);
+                    }
+
+                    continue;
+                }
+                if (isset($blok["gabungan"][$c])) {
+                    foreach ($gabung ? [$ku1] : [$ku1, $ku2] as $nama) {
+                        $nama !== "" && $hasil[$t]["petugas"][] = ["peran" => $target[1], "kebaktian" => "Gabungan", "nama" => $nama];
                     }
 
                     continue;
                 }
                 if ($gabung) {
-                    $ku1 !== '' && $hasil[$t]['petugas'][] = ['peran' => $target[1], 'kebaktian' => null, 'nama' => $ku1];
+                    $ku1 !== "" && $hasil[$t]["petugas"][] = ["peran" => $target[1], "kebaktian" => null, "nama" => $ku1];
 
                     continue;
                 }
-                $ku1 !== '' && $hasil[$t]['petugas'][] = ['peran' => $target[1], 'kebaktian' => 'KU I', 'nama' => $ku1];
-                $ku2 !== '' && $hasil[$t]['petugas'][] = ['peran' => $target[1], 'kebaktian' => 'KU II', 'nama' => $ku2];
+                $ku1 !== "" && $hasil[$t]["petugas"][] = ["peran" => $target[1], "kebaktian" => "KU I", "nama" => $ku1];
+                $ku2 !== "" && $hasil[$t]["petugas"][] = ["peran" => $target[1], "kebaktian" => "KU II", "nama" => $ku2];
+            }
+        }
+
+        // Nama ibadah khusus (Paska, Komisi Anak, ...) disimpan di keterangan.
+        foreach ($hasil as $t => $j) {
+            if (isset($j["ibadah"])) {
+                $hasil[$t]["info"]["keterangan"] = mb_substr(trim($j["ibadah"]." · ".($j["info"]["keterangan"] ?? ""), " ·"), 0, 255);
+                unset($hasil[$t]["ibadah"]);
             }
         }
 
         return $hasil;
     }
-
     private function label(string $teks): ?array
     {
         $t = mb_strtolower($teks);
+        if (mb_strlen($t) > 40) {
+            return null; // catatan panjang di bawah jadwal, bukan label baris
+        }
         foreach (self::LABEL as $kunci => $target) {
             if (str_contains($t, $kunci)) {
                 return $target;
@@ -159,25 +208,46 @@ class JadwalImporter
 
     private function teks(mixed $v): string
     {
-        return trim(preg_replace('/\s+/u', ' ', (string) $v));
+        return trim(preg_replace("/\s+/u", " ", (string) $v));
     }
 
-    public function tanggal(mixed $v): ?string
+    /** "Maret", "mar", "March", "agust", "Des" -> 3 / 8 / 12. */
+    private function nomorBulan(string $nama): ?int
     {
-        if ($v === null || $v === '') {
+        $n = mb_strtolower($nama);
+        $en = self::BULAN[$n] ?? $n;
+        foreach (array_values(array_unique(self::BULAN)) as $i => $bulan) {
+            if (str_starts_with($bulan, $en) && mb_strlen($en) >= 3) {
+                return $i + 1;
+            }
+        }
+        foreach (array_keys(self::BULAN) as $id) {
+            if (mb_strlen($n) >= 3 && str_starts_with($id, $n)) {
+                return $this->nomorBulan($id);
+            }
+        }
+
+        return null;
+    }
+
+    /** Tanggal dari sel Excel: angka tanggal Excel, "01 November 2026", "1 Maret" (+ tahun default), "4-Jan". */
+    public function tanggal(mixed $v, ?int $tahun = null): ?string
+    {
+        if ($v === null || $v === "") {
             return null;
         }
         if (is_numeric($v) && $v > 30000 && $v < 80000) {
             return Carbon::instance(ExcelDate::excelToDateTimeObject((float) $v))->toDateString();
         }
-        if (! is_string($v) || ! preg_match('/(\d{1,2})[\s\-\/]+([a-z]+)[\s\-\/]+(\d{4})/i', $v, $m)) {
+        if (! is_string($v) || ! preg_match("/^\s*(\d{1,2})[\s\-\/]+([a-z]+)\.?(?:[\s\-\/,]+(\d{4}))?\s*$/i", $v, $m)) {
             return null;
         }
-        $bulan = self::BULAN[mb_strtolower($m[2])] ?? mb_strtolower($m[2]);
-        try {
-            return Carbon::createFromFormat('j F Y', "{$m[1]} {$bulan} {$m[3]}")->toDateString();
-        } catch (\Throwable) {
+        $bulan = $this->nomorBulan($m[2]);
+        $tahun = ! empty($m[3]) ? (int) $m[3] : ($tahun ?? (int) now()->year);
+        if (! $bulan || ! checkdate($bulan, (int) $m[1], $tahun)) {
             return null;
         }
+
+        return sprintf("%04d-%02d-%02d", $tahun, $bulan, (int) $m[1]);
     }
 }

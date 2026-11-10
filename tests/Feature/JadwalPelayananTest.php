@@ -145,4 +145,43 @@ class JadwalPelayananTest extends TestCase
         $this->actingAs(User::where('email', 'penyambut@gktsinai.test')->firstOrFail());
         $this->get('/admin/beban-pelayanan')->assertForbidden();
     }
+
+    public function test_import_format_rekap_tahunan(): void
+    {
+        $book = new Spreadsheet;
+        $s = $book->getActiveSheet()->setTitle('Sept');
+        $s->setCellValue('A1', 'Bulan : September 2026');
+        $s->setCellValue('A3', 'Tanggal');
+        $s->mergeCells('A3:A5');
+        // "6 September" tanpa tahun; 27 Sep ibadah gabungan; kolom "30 Agustus" sisa salinan sheet lain.
+        foreach (['B' => '6 September', 'D' => '27 September', 'F' => '30 Agustus'] as $c => $v) {
+            $s->setCellValue("{$c}3", $v);
+            $c2 = chr(ord($c) + 1);
+            $s->mergeCells("{$c}3:{$c2}3");
+        }
+        $s->setCellValue('B4', "Ibadah Umum I\npukul 07.00 WIB");
+        $s->setCellValue('C4', "Ibadah Umum 2\npukul 09.00 WIB");
+        $s->setCellValue('D4', 'Ibadah Gabungan (Paska)');
+        $s->mergeCells('D4:E5');
+        $s->fromArray(['Pembicara', 'Pdt. Candrawati, S.E., M. Th', null, 'Dr. Kettler (U.T. Apeldoom)', null, 'Salah', null], null, 'A6');
+        $s->mergeCells('B6:C6');
+        $s->mergeCells('D6:E6');
+        $s->fromArray(['Penyambut &  Kolektan', 'Jay + Papa Mama', 'Ibu Fera', 'Bpk. Fajar', 'pnt. Nurkartika dan Ev. Daniel'], null, 'A7');
+        $s->setCellValue('A9', str_repeat('Bila ada kendala mengenai jadwal di atas hubungi sekretariat. ', 3));
+        $s->mergeCells('A9:G12');
+        $path = tempnam(sys_get_temp_dir(), 'jdw').'.xlsx';
+        (new Xlsx($book))->save($path);
+
+        $j = app(JadwalImporter::class)->baca($path);
+        $this->assertSame(['2026-09-06', '2026-09-27'], array_keys($j));
+        $this->assertSame('Ibadah Gabungan (Paska)', $j['2026-09-27']['info']['keterangan']);
+        $this->assertSame(['Gabungan'], array_values(array_unique(array_column($j['2026-09-27']['petugas'], 'kebaktian'))));
+        $this->assertContains('Jay + Papa Mama', array_column($j['2026-09-06']['petugas'], 'nama'));
+
+        $m = app(PelayanMatcher::class);
+        $this->assertSame('candrawati', $m->urai('Pdt. Candrawati, S.E., M. Th')['kunci']);
+        $this->assertSame('kettler', $m->urai('Dr. Kettler (U.T. Apeldoom)')['kunci']);
+        Member::create(['name' => 'NURKARTIKAWATI', 'gender' => 'P', 'membership_status' => 'sidi']);
+        $this->assertSame('NURKARTIKAWATI', $m->cocokkan($m->urai('pnt. Nurkartika'))?->name);
+    }
 }

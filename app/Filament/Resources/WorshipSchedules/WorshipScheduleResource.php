@@ -45,7 +45,7 @@ class WorshipScheduleResource extends Resource
 
     public static function kebaktianOpsi(): array
     {
-        return ['KU I' => 'Ibadah Umum I', 'KU II' => 'Ibadah Umum II'];
+        return ['KU I' => 'Ibadah Umum I', 'KU II' => 'Ibadah Umum II', 'Gabungan' => 'Ibadah Gabungan'];
     }
 
     /** Baris kosong untuk jadwal baru, mengikuti format jadwal gereja. */
@@ -53,7 +53,7 @@ class WorshipScheduleResource extends Resource
     {
         $baris = [['peran' => 'pembicara', 'kebaktian' => null, 'nama' => null]];
         foreach (['liturgis' => 1, 'singer' => 2, 'pewarta' => 1, 'lcd' => 1, 'penyambut' => 2] as $peran => $n) {
-            foreach (array_keys(self::kebaktianOpsi()) as $k) {
+            foreach (['KU I', 'KU II'] as $k) {
                 for ($i = 0; $i < $n; $i++) {
                     $baris[] = ['peran' => $peran, 'kebaktian' => $k, 'nama' => null];
                 }

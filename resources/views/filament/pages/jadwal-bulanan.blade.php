@@ -6,7 +6,7 @@
         </x-filament::input.wrapper>
         <x-filament::button color="gray" size="sm" icon="heroicon-m-chevron-right" icon-position="after" wire:click="geser(1)">Berikutnya</x-filament::button>
         <span style="flex:1"></span>
-        <x-filament::button color="gray" size="sm" tag="a" :href="$urlDaftar">Daftar & import Excel</x-filament::button>
+        <x-filament::button color="gray" size="sm" tag="a" :href="$urlDaftar">Daftar jadwal</x-filament::button>
         @if ($bisaKelola)
             <x-filament::button size="sm" tag="a" :href="$urlBaru" icon="heroicon-m-plus">Jadwal baru</x-filament::button>
         @endif

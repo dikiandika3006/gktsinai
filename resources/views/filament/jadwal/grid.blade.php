@@ -3,6 +3,7 @@
     use App\Models\ServantAlias;
     use App\Support\Opsi;
     $ku = ['KU I' => 'Ibadah Umum I', 'KU II' => 'Ibadah Umum II'];
+    $gabungan = fn ($j) => $j->assignments->isNotEmpty() && $j->assignments->every(fn ($a) => $a->kebaktian === 'Gabungan');
     $warna = ['success' => '#16a34a', 'warning' => '#d97706', 'danger' => '#dc2626', 'gray' => '#6b7280'];
     $info = ['tema' => 'Tema', 'ayat_referensi' => 'Ayat Referensi', 'introitus' => 'Introitus', 'phb' => 'PHB'];
     $peranDipakai = collect(Opsi::PERAN_PELAYANAN)->filter(fn ($l, $p) => $p === "pembicara" || $jadwal->contains(fn ($j) => $j->assignments->contains('peran', $p)));
@@ -33,7 +34,7 @@
             </tr>
             <tr style="background:rgba(245,158,11,.1)">
                 @foreach ($jadwal as $j)
-                    @foreach ($ku as $l)<th style="{{ $th }}">{{ $l }}</th>@endforeach
+                    @if ($gabungan($j))<th style="{{ $th }}" colspan="2">Ibadah Gabungan</th>@else @foreach ($ku as $l)<th style="{{ $th }}">{{ $l }}</th>@endforeach @endif
                 @endforeach
             </tr>
         </thead>
@@ -42,12 +43,12 @@
                 <tr @if ($loop->odd) style="background:rgba(250,204,21,.08)" @endif>
                     <td style="{{ $lbl }}">{{ $label }}</td>
                     @foreach ($jadwal as $j)
-                        @php $semua = $j->assignments->where('peran', $peran); $bersama = $semua->whereNull('kebaktian'); @endphp
-                        @if ($semua->isNotEmpty() && $bersama->count() === $semua->count())
+                        @php $semua = $j->assignments->where('peran', $peran); $bersama = $semua->filter(fn ($a) => ! isset($ku[$a->kebaktian])); @endphp
+                        @if ($gabungan($j) || ($semua->isNotEmpty() && $bersama->count() === $semua->count()))
                             <td style="{{ $td }}" colspan="2">{!! $bersama->map($chip)->join('<br>') !!}</td>
                         @else
                             @foreach (array_keys($ku) as $k)
-                                <td style="{{ $td }}">{!! $semua->filter(fn ($a) => $a->kebaktian === $k || $a->kebaktian === null)->map($chip)->join('<br>') ?: '<span style="opacity:.35">-</span>' !!}</td>
+                                <td style="{{ $td }}">{!! $semua->filter(fn ($a) => $a->kebaktian === $k || ! isset($ku[$a->kebaktian]))->map($chip)->join('<br>') ?: '<span style="opacity:.35">-</span>' !!}</td>
                             @endforeach
                         @endif
                     @endforeach

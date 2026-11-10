@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\WorshipSchedules\Pages\ListWorshipSchedules;
 use App\Filament\Resources\WorshipSchedules\WorshipScheduleResource;
 use App\Models\WorshipSchedule;
 use BackedEnum;
@@ -42,6 +43,11 @@ class JadwalBulanan extends Page
     private function awal(): Carbon
     {
         return rescue(fn () => Carbon::createFromFormat('Y-m-d', $this->bulan.'-01')->startOfDay(), now()->startOfMonth(), false);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [ListWorshipSchedules::importAction()];
     }
 
     protected function getViewData(): array

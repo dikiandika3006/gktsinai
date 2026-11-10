@@ -35,7 +35,7 @@ class PelayanMatcher
         if ($teks === '' || $teks === '-') {
             return [];
         }
-        $bagian = preg_split('/\s*(?:&|\/|;|,|\+|\bdan\b)\s*/iu', $teks);
+        $bagian = preg_split('/\s*(?:&|\/|;|\bdan\b)\s*/iu', $teks);
 
         return array_values(array_filter(array_map('trim', $bagian), fn ($s) => $s !== '' && $s !== '-'));
     }
@@ -43,6 +43,8 @@ class PelayanMatcher
     /** Pisahkan gelar dari nama. */
     public function urai(string $nama): array
     {
+        // Buang keterangan dalam kurung dan gelar akademik setelah koma ("Pdt. Candrawati, S.E., M. Th").
+        $nama = preg_replace('/\s*\(.*?\)|,.*$/u', '', $nama);
         $kata = preg_split('/\s+/u', trim(str_replace('.', '. ', $nama)), -1, PREG_SPLIT_NO_EMPTY);
         $gelar = [];
         while (count($kata) > 1 && array_key_exists($k = mb_strtolower(rtrim($kata[0], '.')), self::GELAR)) {
@@ -126,14 +128,14 @@ class PelayanMatcher
             $inisial[$i] = strlen($t) === 1 || str_ends_with($asli[$i] ?? '', '.');
         }
 
-        $kandidat = $this->jemaat()->filter(function (array $m) use ($token, $inisial, $u) {
+        $cari = fn (bool $awalan) => $this->jemaat()->filter(function (array $m) use ($token, $inisial, $u, $awalan) {
             if ($m['nama'] === $u['kunci'] || $m['alias'] === $u['kunci']) {
                 return true;
             }
             foreach ($token as $i => $t) {
                 $ok = false;
                 foreach ($m['kata'] as $w) {
-                    if ($w === $t || ($inisial[$i] && str_starts_with($w, $t))) {
+                    if ($w === $t || (($inisial[$i] || ($awalan && strlen($t) >= 4)) && str_starts_with($w, $t))) {
                         $ok = true;
                         break;
                     }
@@ -145,6 +147,11 @@ class PelayanMatcher
 
             return true;
         });
+        // Kata utuh dulu; bila tidak ada, izinkan penggalan nama ("Nurkartika" -> Nurkartikawati, "Fesiana" -> Fesianawati).
+        $kandidat = $cari(false);
+        if ($kandidat->isEmpty()) {
+            $kandidat = $cari(true);
+        }
 
         // Persempit bila ambigu: nama persis, jenis kelamin dari sapaan, kepala keluarga untuk "Kel. Bp.", masih tercatat.
         $saring = [
