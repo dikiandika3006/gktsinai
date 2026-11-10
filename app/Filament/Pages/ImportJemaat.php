@@ -37,6 +37,8 @@ class ImportJemaat extends Page
 
     public array $sheets = [];
 
+    public array $sheetNames = [];
+
     public array $headings = [];
 
     public array $mapping = [];
@@ -85,6 +87,7 @@ class ImportJemaat extends Page
         $imp = app(MemberImporter::class);
         $data = $imp->read($this->fullPath(), $this->sheet);
         $this->sheets = $data['sheets'];
+        $this->sheetNames = $data['sheet_names'];
         $this->headings = $data['headings'];
         $this->rowCount = count($data['rows']);
         $this->headerRow = $data['header_row'];

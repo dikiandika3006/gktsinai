@@ -90,7 +90,9 @@ class Tentang
         [
             'tanggal' => '10 November 2026',
             'perubahan' => [
-                'Data jemaat asli (386 orang, 130 KK) diimpor dari "Data Jemaat Lengkap.xlsx", menggantikan data contoh.',
+                'Data jemaat diperbarui dari sheet "Data Jemaat Komprehensif" (385 orang, 129 KK); SIB0337 digabung ke SIB0121 sesuai catatan Excel; kolom Catatan ikut diimpor.',
+                'Import Excel hanya membaca sheet yang dipilih dan memakai nilai tersimpan dari kolom rumus, sehingga file dengan banyak sheet tidak lagi kehabisan memori.',
+                'Data jemaat asli diimpor dari "Data Jemaat Lengkap.xlsx", menggantikan data contoh.',
                 'Tabel jemaat ditambah kolom Baptis di GKT, Sidi di GKT, dan teks asli Excel (status, wilayah, ID KK, alamat) supaya tidak ada data Excel yang hilang.',
                 'Menu baru Tentang: info aplikasi, aturan sistem, riwayat perubahan, serta Backup & Restore database (Alt+F7, khusus Super Admin, pakai PIN).',
                 'Menu baru Pemeliharaan Sistem: update database, impor Excel, bersihkan cache, dan storage link tanpa perlu SSH.',

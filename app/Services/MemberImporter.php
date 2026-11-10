@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Imports\RawImport;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\MemberEvent;
@@ -10,7 +9,9 @@ use App\Models\Region;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 /**
@@ -44,6 +45,7 @@ class MemberImporter
         'death_date' => ['Tanggal wafat', ['tgl wafat', 'tanggal wafat', 'wafat', 'meninggal']],
         'baptized_at_gkt' => ['Baptis di GKT (1/0)', ['baptis di gkt']],
         'confirmed_at_gkt' => ['Sidi di GKT (1/0)', ['sidi di gkt']],
+        'notes' => ['Catatan', ['catatan', 'keterangan']],
     ];
 
     /** Nilai ID KK yang berarti "tidak punya KK". */
@@ -68,8 +70,7 @@ class MemberImporter
     /** @return array{sheets: array<int,string>, headings: array<int,string>, rows: array<int,array>} */
     public function read(string $path, int $sheet = 0): array
     {
-        $all = Excel::toArray(new RawImport, $path);
-        $data = $all[$sheet] ?? [];
+        [$names, $data] = $this->readSheet($path, $sheet);
         // Cari baris header: baris pertama yang punya >= 3 sel terisi.
         $headerIndex = 0;
         foreach ($data as $i => $row) {
@@ -82,7 +83,54 @@ class MemberImporter
         $rows = array_slice($data, $headerIndex + 1);
         $rows = array_values(array_filter($rows, fn ($r) => count(array_filter($r, fn ($v) => $v !== null && trim((string) $v) !== '')) > 0));
 
-        return ['sheets' => array_keys($all), 'headings' => $headings, 'rows' => $rows, 'header_row' => $headerIndex + 1];
+        return ['sheets' => array_keys($names), 'sheet_names' => $names, 'headings' => $headings, 'rows' => $rows, 'header_row' => $headerIndex + 1];
+    }
+
+    /**
+     * Baca satu sheet saja, hanya kolom yang berisi data. Sheet lain tidak dimuat
+     * (sheet dengan format sampai kolom XFD bisa menghabiskan memori).
+     * Rumus diambil dari nilai tersimpan terakhir, jadi rumus yang merujuk sheet lain tetap terbaca.
+     *
+     * @return array{0: array<int,string>, 1: array<int, array<int, mixed>>}
+     */
+    protected function readSheet(string $path, int $sheet): array
+    {
+        $reader = IOFactory::createReaderForFile($path);
+        $names = method_exists($reader, 'listWorksheetNames') ? $reader->listWorksheetNames($path) : ['Sheet1'];
+        $name = $names[$sheet] ?? $names[0];
+        if (method_exists($reader, 'setLoadSheetsOnly')) {
+            $reader->setLoadSheetsOnly([$name]);
+        }
+        $ws = $reader->load($path)->getSheet(0);
+
+        $maxRow = $ws->getHighestDataRow();
+        $maxCol = 0;
+        foreach ($ws->getRowIterator(1, $maxRow) as $row) {
+            $cells = $row->getCellIterator();
+            $cells->setIterateOnlyExistingCells(true);
+            foreach ($cells as $cell) {
+                $v = $cell->getValue();
+                if ($v !== null && $v !== '') {
+                    $maxCol = max($maxCol, Coordinate::columnIndexFromString($cell->getColumn()));
+                }
+            }
+        }
+
+        $data = [];
+        for ($r = 1; $r <= $maxRow; $r++) {
+            $baris = [];
+            for ($c = 1; $c <= $maxCol; $c++) {
+                $cell = $ws->getCell([$c, $r]);
+                $v = $cell->isFormula() ? $cell->getOldCalculatedValue() : $cell->getValue();
+                if ($v instanceof RichText) {
+                    $v = $v->getPlainText();
+                }
+                $baris[] = $v;
+            }
+            $data[] = $baris;
+        }
+
+        return [$names, $data];
     }
 
     /** Tebak pemetaan kolom dari judul kolom. @return array<string, ?int> field => index kolom */
@@ -187,6 +235,7 @@ class MemberImporter
             default => null,
         };
 
+        $d['notes'] = $ambil('notes') !== null ? (string) $ambil('notes') : null;
         $d['legacy_status'] = $ambil('status') !== null ? (string) $ambil('status') : null;
         $status = Str::of((string) $ambil('status'))->lower()->squish()->value();
         [$d['membership_status'], $d['activity_status']] = self::STATUS_LAMA[$status] ?? ['simpatisan', 'aktif'];
@@ -371,6 +420,9 @@ class MemberImporter
                         'legacy_family_code' => $d['legacy_family_code'] ?? $member->legacy_family_code,
                         // Alamat disimpan juga per orang: tidak hilang walau tanpa KK atau beda dari alamat KK.
                         'legacy_address' => $d['address'] ?? $member->legacy_address,
+                        // Catatan dari Excel ditambahkan, catatan yang sudah diisi di aplikasi tidak ditimpa.
+                        'notes' => ($d['notes'] && ! str_contains((string) $member->notes, $d['notes']))
+                            ? trim($member->notes."\n".$d['notes']) : $member->notes,
                     ]);
                     $member->save();
 

@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     @php($td = 'padding:.35rem .5rem;border-bottom:1px solid rgba(127,127,127,.15);vertical-align:top')
-    <x-filament::section heading="1. Pilih file Excel" description="Gunakan Data_Jemaat_Lengkap.xlsx (sheet Semua Data Jemaat) sebagai sumber migrasi utama. Data dengan kode yang sama akan diperbarui, bukan diduplikasi.">
+    <x-filament::section heading="1. Pilih file Excel" description="Gunakan Data Jemaat Lengkap.xlsx (sheet Data Jemaat Komprehensif) sebagai sumber migrasi utama. Data dengan kode yang sama akan diperbarui, bukan diduplikasi.">
         <input type="file" wire:model="file" accept=".xlsx,.xls,.csv" />
         <div wire:loading wire:target="file" style="font-size:.85rem;opacity:.7">Mengunggah & membaca file...</div>
         @error('file') <p style="color:#dc2626;font-size:.85rem">{{ $message }}</p> @enderror
@@ -10,7 +10,7 @@
                     <x-filament::input.wrapper style="display:inline-block;min-width:200px">
                         <x-filament::input.select wire:model.live="sheet">
                             @foreach ($sheets as $s)
-                                <option value="{{ $s }}">Sheet {{ $s + 1 }}</option>
+                                <option value="{{ $s }}">{{ $sheetNames[$s] ?? 'Sheet '.($s + 1) }}</option>
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>

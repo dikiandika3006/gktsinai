@@ -28,6 +28,8 @@ class Tentang extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInformationCircle;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
+
     protected static ?int $navigationSort = 100;
 
     protected static ?string $title = 'Tentang Aplikasi';
