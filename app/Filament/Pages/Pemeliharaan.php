@@ -4,6 +4,8 @@ namespace App\Filament\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use App\Services\PaketData;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -90,6 +92,39 @@ class Pemeliharaan extends Page
                 ->modalDescription('Mencari titik peta (OpenStreetMap) untuk KK yang belum punya pin, 25 KK per klik (sekitar 1 menit). Klik lagi sampai sisa 0. Pin manual tidak diubah.')
                 ->requiresConfirmation()
                 ->action(fn () => $this->run('Proses pin alamat', 'sij:geocode', ['--sync' => true, '--limit' => 25])),
+
+            Action::make('paketEkspor')->label('Ekspor paket data')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
+                ->modalDescription('Unduh data peta dan/atau jadwal pelayanan untuk dikirim ke server lain (mis. dari lokal ke hosting). Data jemaat, KK, dan user tidak ikut.')
+                ->schema([
+                    CheckboxList::make('bagian')->label('Data yang dikirim')->required()->default(['peta', 'pelayanan'])
+                        ->options(['peta' => 'Peta: pin alamat KK & batas wilayah', 'pelayanan' => 'Pelayanan: jadwal ibadah, petugas & hubungan nama pelayan']),
+                ])
+                ->action(function (array $data) {
+                    $json = json_encode(app(PaketData::class)->ekspor($data['bagian']), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+                    return response()->streamDownload(fn () => print ($json), 'paket-data-'.now()->format('Ymd-His').'.json', ['Content-Type' => 'application/json']);
+                }),
+
+            Action::make('paketImpor')->label('Impor paket data')->icon(Heroicon::OutlinedArrowUpTray)->color('gray')
+                ->modalDescription('Terima paket data dari server lain. Hanya pin KK (dicocokkan lewat kode KK), batas wilayah (nama wilayah), dan jadwal pelayanan (tanggal) yang diperbarui. Data jemaat, kepala keluarga, absensi, dll. di server ini tidak diubah. Pin yang sudah digeser manual di server ini tidak ditimpa.')
+                ->requiresConfirmation()
+                ->schema([
+                    FileUpload::make('file')->label('File paket (.json)')->disk('local')->directory('imports')->required()
+                        ->acceptedFileTypes(['application/json', 'text/plain'])->maxSize(51200),
+                ])
+                ->action(function (array $data) {
+                    $path = Storage::disk('local')->path($data['file']);
+                    try {
+                        $hasil = app(PaketData::class)->impor(json_decode(file_get_contents($path), true) ?? []);
+                        $this->output = "Impor paket data selesai:\n".collect($hasil)->map(fn ($v, $k) => "- {$k}: {$v}")->join("\n");
+                        Notification::make()->success()->title('Paket data diimpor')->send();
+                    } catch (\Throwable $e) {
+                        $this->output = 'Impor paket data gagal: '.$e->getMessage();
+                        Notification::make()->danger()->title('Impor paket data gagal')->body(str($e->getMessage())->limit(200))->send();
+                    } finally {
+                        Storage::disk('local')->delete($data['file']);
+                    }
+                }),
 
             Action::make('cache')->label('Bersihkan cache')->icon(Heroicon::OutlinedArrowPath)->color('gray')
                 ->action(fn () => $this->run('Bersihkan cache', 'optimize:clear')),
