@@ -26,9 +26,11 @@ class PaketData
         if (in_array('peta', $bagian, true)) {
             $paket['wilayah'] = Region::query()->get(['name', 'map_color', 'area_geojson'])
                 ->map(fn (Region $r) => ['nama' => $r->name, 'warna' => $r->map_color, 'area' => $r->area_geojson])->all();
-            $paket['pin_kk'] = Family::query()->whereNotNull('latitude')->whereNotNull('longitude')
-                ->get(['code', 'latitude', 'longitude', 'geocode_status', 'geocoded_at'])
-                ->map(fn (Family $f) => ['kode' => $f->code, 'lat' => $f->latitude, 'lng' => $f->longitude,
+            // Kode jemaat kepala keluarga ikut dikirim: lebih stabil daripada kode KK otomatis (KK-001, ...).
+            $paket['pin_kk'] = Family::query()->whereNotNull('latitude')->whereNotNull('longitude')->with('head:id,code,name')
+                ->get(['id', 'code', 'head_member_id', 'latitude', 'longitude', 'geocode_status', 'geocoded_at'])
+                ->map(fn (Family $f) => ['kode' => $f->code, 'kepala' => $f->head?->code, 'nama' => $f->head?->name,
+                    'lat' => $f->latitude, 'lng' => $f->longitude,
                     'status' => $f->geocode_status, 'waktu' => $f->geocoded_at?->toIso8601String()])->all();
         }
 
@@ -48,25 +50,32 @@ class PaketData
         return $paket;
     }
 
-    /** @return array<string, int> ringkasan */
+    /**
+     * Tiap bagian diimpor sendiri-sendiri: bila jadwal pelayanan gagal (mis. tabelnya belum
+     * dimigrasi di server tujuan), pin peta dan batas wilayah tetap masuk.
+     *
+     * @return array<string, int|string> ringkasan
+     */
     public function impor(array $paket): array
     {
         if (($paket['sij_paket'] ?? null) !== self::VERSI) {
             throw new \InvalidArgumentException('File bukan paket data Sistem Informasi Jemaat.');
         }
-        $hasil = [];
+        $bagian = array_filter([
+            'Batas wilayah' => isset($paket['wilayah']) ? fn () => $this->imporWilayah($paket['wilayah']) : null,
+            'Pin KK' => isset($paket['pin_kk']) ? fn () => $this->imporPin($paket['pin_kk']) : null,
+            'Jadwal pelayanan' => isset($paket['jadwal']) ? fn () => $this->imporPelayanan($paket['nama_pelayan'] ?? [], $paket['jadwal']) : null,
+        ]);
 
-        DB::transaction(function () use ($paket, &$hasil) {
-            if (isset($paket['wilayah'])) {
-                $hasil += $this->imporWilayah($paket['wilayah']);
+        $hasil = [];
+        foreach ($bagian as $judul => $jalankan) {
+            try {
+                $hasil += DB::transaction($jalankan);
+            } catch (\Throwable $e) {
+                $hasil["{$judul} GAGAL"] = str($e->getMessage())->limit(300)->value()
+                    .(str_contains($e->getMessage(), "doesn't exist") ? ' (jalankan "Update database" dulu)' : '');
             }
-            if (isset($paket['pin_kk'])) {
-                $hasil += $this->imporPin($paket['pin_kk']);
-            }
-            if (isset($paket['jadwal'])) {
-                $hasil += $this->imporPelayanan($paket['nama_pelayan'] ?? [], $paket['jadwal']);
-            }
-        });
+        }
 
         return $hasil;
     }
@@ -87,12 +96,22 @@ class PaketData
 
     private function imporPin(array $pin): array
     {
-        $n = $lewat = $tidakAda = 0;
-        $kk = Family::query()->whereIn('code', array_column($pin, 'kode'))->get()->keyBy('code');
+        $n = $lewat = 0;
+        $tidakAda = [];
+        $kk = Family::query()->with('head:id,code')->whereIn('code', array_column($pin, 'kode'))->get()->keyBy('code');
+        $perKepala = Family::query()->with('head:id,code')
+            ->whereHas('head', fn ($q) => $q->whereIn('code', array_filter(array_column($pin, 'kepala'))))
+            ->get()->keyBy(fn (Family $f) => $f->head->code);
+
         foreach ($pin as $p) {
-            $f = $kk[$p['kode']] ?? null;
+            // Utamakan kode jemaat kepala keluarga; kode KK dipakai bila kepalanya sama/tidak diketahui.
+            $kepala = $p['kepala'] ?? null;
+            $f = $kepala ? ($perKepala[$kepala] ?? null) : null;
+            if (! $f && ($g = $kk[$p['kode']] ?? null) && (! $kepala || ! $g->head || $g->head->code === $kepala)) {
+                $f = $g;
+            }
             if (! $f) {
-                $tidakAda++;
+                $tidakAda[] = $p['kode'].(! empty($p['nama']) ? " ({$p['nama']})" : '');
 
                 continue;
             }
@@ -112,7 +131,12 @@ class PaketData
             $n++;
         }
 
-        return ['Pin KK diperbarui' => $n, 'Pin KK dilewati (sama / pin manual di sini)' => $lewat, 'Kode KK tidak ditemukan' => $tidakAda];
+        return array_filter([
+            'Pin KK diperbarui' => $n,
+            'Pin KK dilewati (sama / pin manual di sini)' => $lewat,
+            'KK tidak ditemukan di server ini' => count($tidakAda),
+            'Daftar KK tidak ditemukan' => $tidakAda ? implode(', ', array_slice($tidakAda, 0, 50)).(count($tidakAda) > 50 ? ', ...' : '') : null,
+        ], fn ($v) => $v !== null);
     }
 
     private function imporPelayanan(array $nama, array $jadwal): array

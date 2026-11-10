@@ -2,11 +2,15 @@
 
 namespace App\Filament\Pages;
 
+use App\Jobs\GeocodeFamily;
+use App\Models\Family;
+use App\Services\PaketData;
+use App\Support\Opsi;
 use BackedEnum;
 use Filament\Actions\Action;
-use App\Services\PaketData;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -62,6 +66,78 @@ class Pemeliharaan extends Page
         $this->loadPending();
     }
 
+    // ---- Proses pin alamat (OSM) bertahap lewat wire:poll: tanpa SSH, tanpa queue worker ----
+
+    public bool $pinJalan = false;
+
+    /** @var list<int> */
+    public array $pinAntrean = [];
+
+    public int $pinTotal = 0;
+
+    /** @var array<string, int> */
+    public array $pinHasil = [];
+
+    /** @var list<string> */
+    public array $pinLog = [];
+
+    protected function queryPin(string $cakupan)
+    {
+        return Family::query()->whereNotNull('address')->where('address', '!=', '')
+            ->where('geocode_status', '!=', 'manual')
+            ->when($cakupan === 'belum', fn ($q) => $q->where('geocode_status', 'belum'))
+            ->when($cakupan === 'ulang', fn ($q) => $q->whereIn('geocode_status', ['belum', 'gagal', 'perkiraan']));
+    }
+
+    public function mulaiPin(string $cakupan): void
+    {
+        $this->pinAntrean = $this->queryPin($cakupan)->orderBy('id')->pluck('id')->all();
+        $this->pinTotal = count($this->pinAntrean);
+        $this->pinHasil = [];
+        $this->pinLog = [];
+        $this->pinJalan = $this->pinTotal > 0;
+        if (! $this->pinJalan) {
+            Notification::make()->success()->title('Tidak ada KK yang perlu diproses')->send();
+        }
+    }
+
+    /** Dipanggil berulang oleh wire:poll; tiap panggilan memproses beberapa KK (aman dari batas waktu PHP). */
+    public function prosesPin(): void
+    {
+        if (! $this->pinJalan) {
+            return;
+        }
+        @set_time_limit(60);
+        foreach (array_splice($this->pinAntrean, 0, 3) as $i => $id) {
+            if ($i > 0) {
+                usleep(1_100_000); // Nominatim: maks. 1 permintaan per detik
+            }
+            try {
+                (new GeocodeFamily($id))->handle();
+                $f = Family::find($id);
+                $status = $f?->geocode_status ?? 'hilang';
+            } catch (\Throwable $e) {
+                $f = Family::find($id);
+                $status = 'error';
+            }
+            $this->pinHasil[$status] = ($this->pinHasil[$status] ?? 0) + 1;
+            array_unshift($this->pinLog, sprintf('%s · %s · %s', $f?->code ?? $id, Opsi::label(Opsi::GEOCODE, $status) ?? $status, str((string) $f?->address)->limit(70)));
+        }
+        $this->pinLog = array_slice($this->pinLog, 0, 12);
+
+        if (! $this->pinAntrean) {
+            $this->pinJalan = false;
+            Notification::make()->success()->title('Pin alamat selesai diproses')
+                ->body(collect($this->pinHasil)->map(fn ($n, $s) => (Opsi::label(Opsi::GEOCODE, $s) ?? $s).": {$n}")->join(', '))->send();
+        }
+    }
+
+    public function hentikanPin(): void
+    {
+        $this->pinJalan = false;
+        Notification::make()->title('Proses pin dihentikan')->body(count($this->pinAntrean).' KK belum diproses; tekan tombol lagi untuk melanjutkan.')->send();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -88,10 +164,19 @@ class Pemeliharaan extends Page
                     Storage::disk('local')->delete($data['file']);
                 }),
 
-            Action::make('geocode')->label('Proses pin alamat')->icon(Heroicon::OutlinedMapPin)->color('gray')
-                ->modalDescription('Mencari titik peta (OpenStreetMap) untuk KK yang belum punya pin, 25 KK per klik (sekitar 1 menit). Klik lagi sampai sisa 0. Pin manual tidak diubah.')
-                ->requiresConfirmation()
-                ->action(fn () => $this->run('Proses pin alamat', 'sij:geocode', ['--sync' => true, '--limit' => 25])),
+            Action::make('geocode')->label('Proses pin alamat (OSM)')->icon(Heroicon::OutlinedMapPin)->color('primary')
+                ->disabled(fn () => $this->pinJalan)
+                ->modalHeading('Cari pin alamat lewat OpenStreetMap')
+                ->modalDescription('Diproses otomatis sampai selesai, sekitar 1 detik per KK. Biarkan halaman ini tetap terbuka; bila ditutup, proses berhenti dan bisa dilanjutkan nanti. Pin yang digeser manual tidak diubah.')
+                ->modalSubmitActionLabel('Mulai')
+                ->schema([
+                    Radio::make('cakupan')->label('KK yang diproses')->required()->default('belum')
+                        ->options(fn () => [
+                            'belum' => 'Belum punya pin ('.$this->queryPin('belum')->count().' KK)',
+                            'ulang' => 'Belum punya pin + gagal + perkiraan ('.$this->queryPin('ulang')->count().' KK)',
+                        ]),
+                ])
+                ->action(fn (array $data) => $this->mulaiPin($data['cakupan'])),
 
             Action::make('paketEkspor')->label('Ekspor paket data')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
                 ->modalDescription('Unduh data peta dan/atau jadwal pelayanan untuk dikirim ke server lain (mis. dari lokal ke hosting). Data jemaat, KK, dan user tidak ikut.')
@@ -117,7 +202,11 @@ class Pemeliharaan extends Page
                     try {
                         $hasil = app(PaketData::class)->impor(json_decode(file_get_contents($path), true) ?? []);
                         $this->output = "Impor paket data selesai:\n".collect($hasil)->map(fn ($v, $k) => "- {$k}: {$v}")->join("\n");
-                        Notification::make()->success()->title('Paket data diimpor')->send();
+                        $gagal = collect($hasil)->keys()->filter(fn ($k) => str_ends_with($k, 'GAGAL'));
+                        $gagal->isEmpty()
+                            ? Notification::make()->success()->title('Paket data diimpor')->send()
+                            : Notification::make()->warning()->title('Sebagian gagal: '.$gagal->map(fn ($k) => str_replace(' GAGAL', '', $k))->join(', '))
+                                ->body('Lihat rincian di kotak hasil di bawah.')->send();
                     } catch (\Throwable $e) {
                         $this->output = 'Impor paket data gagal: '.$e->getMessage();
                         Notification::make()->danger()->title('Impor paket data gagal')->body(str($e->getMessage())->limit(200))->send();
