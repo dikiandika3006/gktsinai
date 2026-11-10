@@ -17,6 +17,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -52,7 +53,7 @@ class VisitResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->visibleTo(auth()->user())->with(['family.head', 'family.region', 'member', 'team', 'report']);
+        return parent::getEloquentQuery()->visibleTo(auth()->user())->with(['family.head', 'family.region', 'member', 'team', 'pendamping', 'report']);
     }
 
     public static function form(Schema $schema): Schema
@@ -71,9 +72,15 @@ class VisitResource extends Resource
                 Select::make('type')->label('Jenis')->options(Opsi::JENIS_VISITASI)->required()
                     ->default(fn () => request()->query('type', 'rutin')),
                 DatePicker::make('planned_date')->label('Tanggal rencana')->required()->default(today()->addDays(7)),
-                Select::make('team')->label('Tim yang ditugaskan')->multiple()->relationship('team', 'name')
+                Select::make('team')->label('Tim yang ditugaskan (user)')->multiple()->relationship('team', 'name')
                     ->options(fn () => User::role(['tim_visitasi', 'pendeta', 'majelis', 'koordinator_wilayah'])->where('is_active', true)->pluck('name', 'id'))
+                    ->helperText('Bisa lebih dari satu. User tim bisa membuka dan mengisi laporan kunjungan ini.')
                     ->preload()->columnSpan(2),
+                Select::make('pendamping')->label('Pendamping (dari data jemaat)')->multiple()->relationship('pendamping', 'name')
+                    ->getSearchResultsUsing(fn (string $search) => Member::query()->tercatat()->search($search)->orderBy('name')->limit(30)
+                        ->get()->mapWithKeys(fn (Member $m) => [$m->id => $m->name.($m->alias ? " ({$m->alias})" : '')]))
+                    ->searchable()->helperText('Jemaat yang ikut berkunjung tanpa akun login. Tidak mendapat akses ke laporan.')
+                    ->columnSpan(3),
                 Select::make('status')->label('Status')->options(Opsi::STATUS_VISITASI)->default('rencana')->required()->live(),
                 DatePicker::make('realized_date')->label('Tanggal realisasi')
                     ->visible(fn (Get $get) => $get('status') === 'selesai')->default(today()),
@@ -96,13 +103,14 @@ class VisitResource extends Resource
                 TextEntry::make('realized_date')->label('Realisasi')->date('d/m/Y'),
                 TextEntry::make('status')->badge()->formatStateUsing(fn ($state) => Opsi::label(Opsi::STATUS_VISITASI, $state)),
                 TextEntry::make('team.name')->label('Tim')->badge(),
+                TextEntry::make('pendamping.name')->label('Pendamping')->badge()->color('gray')->placeholder('-'),
                 TextEntry::make('family.address')->label('Alamat')->columnSpan(2)->visible(fn () => auth()->user()->lihatKontak()),
                 TextEntry::make('notes')->label('Catatan')->columnSpan(2),
             ]),
             Section::make('Laporan kunjungan (VS-04)')->columns(2)
                 ->visible(fn (Visit $v) => $v->report !== null)
                 ->schema(fn (Visit $v) => $v->report && $v->report->canBeReadBy(auth()->user()) ? [
-                    TextEntry::make('report.attendees')->label('Yang hadir'),
+                    TextEntry::make('report.daftar_hadir')->label('Yang hadir')->placeholder('-'),
                     TextEntry::make('report.author.name')->label('Ditulis oleh')
                         ->suffix(fn () => $v->report->is_confidential ? '  (RAHASIA)' : ''),
                     TextEntry::make('report.conversation')->label('Pokok percakapan')->columnSpanFull(),
@@ -155,11 +163,15 @@ class VisitResource extends Resource
             ->visible(fn (Visit $v) => auth()->user()->can('report', $v)
                 && (! $v->report || $v->report->user_id === auth()->id() || auth()->user()->kelolaVisitasi()))
             ->fillForm(fn (Visit $v) => $v->report && $v->report->canBeReadBy(auth()->user())
-                ? $v->report->only(['attendees', 'conversation', 'prayer_points', 'follow_up', 'is_confidential']) + ['realized_date' => $v->realized_date ?? today()]
-                : ['realized_date' => $v->realized_date ?? today()])
+                ? $v->report->only(['attendee_member_ids', 'attendees', 'conversation', 'prayer_points', 'follow_up', 'is_confidential']) + ['realized_date' => $v->realized_date ?? today()]
+                : ['realized_date' => $v->realized_date ?? today(), 'attendee_member_ids' => array_filter([$v->member_id])])
             ->schema([
                 DatePicker::make('realized_date')->label('Tanggal kunjungan')->required(),
-                Textarea::make('attendees')->label('Yang hadir')->rows(2),
+                CheckboxList::make('attendee_member_ids')->label('Anggota KK yang hadir')
+                    ->options(fn (Visit $v) => self::anggotaUntukLaporan($v))
+                    ->visible(fn (Visit $v) => self::anggotaUntukLaporan($v) !== [])
+                    ->columns(2)->bulkToggleable(),
+                Textarea::make('attendees')->label('Yang hadir lainnya (kerabat, tamu)')->rows(2),
                 Textarea::make('conversation')->label('Pokok percakapan')->rows(4),
                 Textarea::make('prayer_points')->label('Pokok doa')->rows(3),
                 Textarea::make('follow_up')->label('Tindak lanjut')->rows(2),
@@ -171,6 +183,15 @@ class VisitResource extends Resource
                     + ['user_id' => $v->report?->user_id ?? auth()->id()]);
                 Notification::make()->success()->title('Laporan kunjungan disimpan')->send();
             });
+    }
+
+    /** Anggota KK yang dikunjungi (atau orangnya bila tanpa KK), untuk dicentang di laporan. @return array<int,string> */
+    public static function anggotaUntukLaporan(Visit $v): array
+    {
+        return Member::query()->tercatat()
+            ->when($v->family_id, fn ($query) => $query->where('family_id', $v->family_id), fn ($query) => $query->whereKey($v->member_id))
+            ->orderByRaw("family_relation = 'kepala' desc")->orderBy('birth_date')
+            ->pluck('name', 'id')->all();
     }
 
     public static function getPages(): array

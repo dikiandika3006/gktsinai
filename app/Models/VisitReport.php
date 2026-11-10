@@ -11,7 +11,16 @@ class VisitReport extends Model
 
     protected function casts(): array
     {
-        return ['is_confidential' => 'boolean'];
+        return ['is_confidential' => 'boolean', 'attendee_member_ids' => 'array'];
+    }
+
+    /** Nama anggota KK yang dicentang hadir + teks "yang hadir lainnya". */
+    public function getDaftarHadirAttribute(): ?string
+    {
+        $nama = Member::whereIn('id', $this->attendee_member_ids ?? [])->orderBy('name')->pluck('name');
+        $semua = $nama->when($this->attendees, fn ($c) => $c->push($this->attendees));
+
+        return $semua->isEmpty() ? null : $semua->join(', ');
     }
 
     protected static function booted(): void

@@ -42,6 +42,12 @@ class Visit extends Model
         return $this->belongsToMany(User::class, 'visit_user');
     }
 
+    /** Pendamping dari data jemaat (tidak perlu punya akun; tidak mendapat akses laporan). */
+    public function pendamping(): BelongsToMany
+    {
+        return $this->belongsToMany(Member::class, 'visit_companions');
+    }
+
     public function report(): HasOne
     {
         return $this->hasOne(VisitReport::class);
