@@ -93,6 +93,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->peran('pendeta');
     }
 
+    /** Boleh mengisi/mengimport jadwal pelayanan dan menghubungkan nama pelayan. */
+    public function kelolaJadwal(): bool
+    {
+        return $this->peran('super_admin', 'sekretariat');
+    }
+
     public function kelolaKehadiran(): bool
     {
         return $this->peran('super_admin', 'sekretariat', 'koordinator_wilayah', 'koordinator_komisi', 'penyambut', 'petugas_absensi');

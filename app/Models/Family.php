@@ -48,6 +48,20 @@ class Family extends Model
             }
         });
 
+        // Kepala diganti (mis. lewat form edit KK): samakan kolom "Hubungan" agar tidak ada dua kepala.
+        static::saved(function (Family $f) {
+            if (! $f->wasChanged('head_member_id')) {
+                return;
+            }
+            if ($lama = $f->getOriginal('head_member_id')) {
+                Member::whereKey($lama)->where('family_id', $f->id)->where('family_relation', 'kepala')->first()
+                    ?->update(['family_relation' => 'lainnya']);
+            }
+            Member::whereKey($f->head_member_id)->where('family_id', $f->id)
+                ->where(fn ($q) => $q->whereNull('family_relation')->orWhere('family_relation', '!=', 'kepala'))->first()
+                ?->update(['family_relation' => 'kepala']);
+        });
+
         // Geocoding otomatis saat alamat berubah (lewat antrean).
         static::saved(function (Family $f) {
             if ($f->wasChanged('address') || ($f->wasRecentlyCreated && $f->address)) {

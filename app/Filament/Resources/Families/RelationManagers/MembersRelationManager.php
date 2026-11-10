@@ -2,15 +2,16 @@
 
 namespace App\Filament\Resources\Families\RelationManagers;
 
+use App\Filament\Actions\KeluargaActions;
 use App\Filament\Resources\Members\MemberResource;
 use App\Support\Opsi;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -64,12 +65,13 @@ class MembersRelationManager extends RelationManager
                 Action::make('lihat')->label('Profil')->icon(Heroicon::OutlinedEye)
                     ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record])),
                 EditAction::make(),
-                Action::make('kepala')->label('Jadikan kepala')->icon(Heroicon::OutlinedStar)
-                    ->visible(fn ($record) => auth()->user()->kelolaJemaat() && $this->getOwnerRecord()->head_member_id !== $record->id)
-                    ->action(function ($record) {
-                        $this->getOwnerRecord()->update(['head_member_id' => $record->id]);
-                        Notification::make()->success()->title($record->name.' menjadi kepala keluarga')->send();
-                    }),
+                ActionGroup::make([
+                    KeluargaActions::jadikanKepala()->after(fn () => $this->getOwnerRecord()->refresh()),
+                    KeluargaActions::pindah()->after(fn () => $this->getOwnerRecord()->refresh()),
+                ]),
+            ])
+            ->toolbarActions([
+                KeluargaActions::pindahBulk()->label('Pindah KK terpilih')->after(fn () => $this->getOwnerRecord()->refresh()),
             ]);
     }
 }

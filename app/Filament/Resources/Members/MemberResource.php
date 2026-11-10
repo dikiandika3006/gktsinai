@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Members;
 
 use App\Exports\MembersExport;
+use App\Filament\Actions\KeluargaActions;
 use App\Filament\Resources\Families\FamilyResource;
 use App\Filament\Resources\Members\Pages\CreateMember;
 use App\Filament\Resources\Members\Pages\EditMember;
@@ -19,6 +20,7 @@ use App\Support\Opsi;
 use App\Support\Telepon;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -30,6 +32,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -174,6 +177,9 @@ class MemberResource extends Resource
                 TextEntry::make('confirmed_at_gkt')->label('Sidi di GKT')->formatStateUsing(fn ($state) => $state ? 'Ya' : 'Tidak'),
                 TextEntry::make('notes')->label('Catatan')->columnSpanFull(),
             ]),
+            Section::make('Anggota keluarga')->collapsible()->schema([
+                ViewEntry::make('keluarga')->hiddenLabel()->view('filament.keluarga.entry'),
+            ]),
             Section::make('Data asli Excel (lama)')->columns(4)->collapsed()->schema([
                 TextEntry::make('legacy_status')->label('Kategori / Status Jemaat'),
                 TextEntry::make('legacy_region')->label('Wilayah'),
@@ -198,7 +204,10 @@ class MemberResource extends Resource
                 TextColumn::make('age')->label('Umur')
                     ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('birth_date', $direction === 'asc' ? 'desc' : 'asc')),
                 TextColumn::make('birth_date')->label('Tgl lahir')->date('d/m/Y')->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('family.code')->label('KK')->sortable()->searchable(),
+                TextColumn::make('family.code')->label('KK')->sortable()->searchable()
+                    ->description(fn (Member $r) => $r->family_relation ? Opsi::label(Opsi::HUBUNGAN, $r->family_relation) : null)
+                    ->url(fn (Member $r) => $r->family_id ? FamilyResource::getUrl('view', ['record' => $r->family_id]) : null)
+                    ->color('primary'),
                 TextColumn::make('family.region.name')->label('Wilayah')->toggleable(),
                 TextColumn::make('membership_status')->label('Keanggotaan')->badge()
                     ->formatStateUsing(fn ($state) => Opsi::label(Opsi::KEANGGOTAAN, $state))
@@ -266,9 +275,14 @@ class MemberResource extends Resource
             ->filtersFormColumns(2)
             ->recordActions([
                 ViewAction::make(),
+                KeluargaActions::lihatKeluarga(),
                 EditAction::make(),
-                Action::make('pdf')->label('Buku induk')->icon(Heroicon::OutlinedDocumentText)
-                    ->url(fn (Member $r) => route('pdf.member', $r), true),
+                ActionGroup::make([
+                    KeluargaActions::pindah(),
+                    KeluargaActions::jadikanKepala(),
+                    Action::make('pdf')->label('Buku induk')->icon(Heroicon::OutlinedDocumentText)
+                        ->url(fn (Member $r) => route('pdf.member', $r), true),
+                ]),
             ])
             ->headerActions([
                 Action::make('export')->label('Ekspor Excel')->icon(Heroicon::OutlinedArrowDownTray)
@@ -282,6 +296,7 @@ class MemberResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    KeluargaActions::pindahBulk(),
                     BulkAction::make('komisi')->label('Tambahkan ke komisi')->icon(Heroicon::OutlinedUserGroup)
                         ->visible(fn () => auth()->user()->kelolaJemaat())
                         ->schema([Select::make('commission_id')->label('Komisi')->options(Commission::pluck('name', 'id'))->required()])

@@ -146,6 +146,23 @@ class FamilyResource extends Resource
                     ->options(['ya' => 'Ada usulan wilayah berbeda'])
                     ->query(fn (Builder $query, array $data) => $data['value'] ? $query->whereNotNull('suggested_region_id')
                         ->where(fn ($w) => $w->whereNull('region_id')->orWhereColumn('suggested_region_id', '!=', 'region_id')) : $query),
+                SelectFilter::make('rapikan')->label('Perlu dirapikan')
+                    ->options([
+                        'tanpa_kepala' => 'Belum ada kepala keluarga',
+                        'kepala_di_kk_lain' => 'Kepala tercatat di KK lain',
+                        'kepala_ganda' => 'Lebih dari satu "Kepala Keluarga"',
+                        'hubungan_kosong' => 'Ada anggota tanpa hubungan',
+                        'kosong' => 'KK tanpa anggota',
+                    ])
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'tanpa_kepala' => $query->whereNull('head_member_id')->has('members'),
+                        'kepala_di_kk_lain' => $query->whereNotNull('head_member_id')
+                            ->whereDoesntHave('members', fn ($m) => $m->whereColumn('members.id', 'families.head_member_id')),
+                        'kepala_ganda' => $query->whereHas('members', fn ($m) => $m->where('family_relation', 'kepala'), '>', 1),
+                        'hubungan_kosong' => $query->whereHas('members', fn ($m) => $m->whereNull('family_relation')),
+                        'kosong' => $query->doesntHave('members'),
+                        default => $query,
+                    }),
                 SelectFilter::make('kunjungan')->label('Kunjungan')
                     ->options(['lebih12' => 'Belum dikunjungi > 12 bulan'])
                     ->query(fn (Builder $query, array $data) => $data['value'] ? $query->whereDoesntHave('visits', fn ($v) => $v->where('status', 'selesai')

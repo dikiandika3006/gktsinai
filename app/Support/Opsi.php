@@ -114,6 +114,24 @@ class Opsi
         'petugas_absensi' => 'Petugas Absensi',
     ];
 
+    /** Peran pelayanan di jadwal ibadah (urutan = urutan baris di jadwal). */
+    public const PERAN_PELAYANAN = [
+        'pembicara' => 'Pembicara',
+        'liturgis' => 'Liturgis',
+        'singer' => 'Singer',
+        'pemusik' => 'Pemusik',
+        'pewarta' => 'Pewarta',
+        'lcd' => 'LCD',
+        'penyambut' => 'Penyambut & Kolektan',
+    ];
+
+    /** Kategori pelayan yang belum terdaftar di data jemaat. */
+    public const KATEGORI_PELAYAN = [
+        'simpatisan' => 'Simpatisan (belum didata)',
+        'pekerja' => 'Pekerja / Hamba Tuhan',
+        'tamu' => 'Pelayan tamu (dari luar)',
+    ];
+
     public static function label(array $opsi, ?string $key): ?string
     {
         return $key === null ? null : ($opsi[$key] ?? $key);
