@@ -72,27 +72,22 @@ Artisan::command('sij:refresh-attention', function () {
 })->purpose('Hitung ulang daftar perhatian');
 
 // Backup database harian, disimpan 30 hari, salinan di disk terpisah (BACKUP_DISK).
-Artisan::command('sij:backup', function () {
-    $db = config('database.connections.mysql');
-    $dir = storage_path('app/backups');
-    File::ensureDirectoryExists($dir);
-    $file = $dir.'/sij-'.now()->format('Ymd-His').'.sql.gz';
-    $dump = env('MYSQLDUMP_PATH', 'mysqldump');
-    $cmd = sprintf('%s --single-transaction --routines --host=%s --port=%s --user=%s %s %s | gzip > %s',
-        escapeshellarg($dump), escapeshellarg($db['host']), escapeshellarg((string) $db['port']), escapeshellarg($db['username']),
-        $db['password'] ? '--password='.escapeshellarg($db['password']) : '', escapeshellarg($db['database']), escapeshellarg($file));
-    exec($cmd, $out, $code);
-    if ($code !== 0 || ! file_exists($file) || filesize($file) < 100) {
-        $this->error('Backup gagal.');
+// PHP murni (tanpa mysqldump/exec) supaya jalan di shared hosting. File sama dengan menu Tentang → Alt+F7.
+Artisan::command('sij:backup', function (\App\Services\DatabaseBackupService $backups) {
+    try {
+        $name = $backups->exclusive(fn () => $backups->backup());
+    } catch (\Throwable $e) {
+        $this->error('Backup gagal: '.$e->getMessage());
 
         return 1;
     }
+    $file = $backups->path($name);
     if ($disk = env('BACKUP_DISK')) {
-        Storage::disk($disk)->put('sij-backups/'.basename($file), fopen($file, 'r'));
+        Storage::disk($disk)->put('sij-backups/'.$name, fopen($file, 'r'));
     }
-    foreach (File::files($dir) as $f) {
-        if ($f->getMTime() < now()->subDays(30)->getTimestamp()) {
-            File::delete($f->getPathname());
+    foreach ($backups->list() as $b) {
+        if ($b['time'] < now()->subDays(30)->getTimestamp()) {
+            $backups->delete($b['name']);
         }
     }
     $this->info('Backup tersimpan: '.$file);

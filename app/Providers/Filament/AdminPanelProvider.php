@@ -44,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
                 isRequired: fn () => (bool) auth()->user()?->hasAnyRole(['super_admin', 'pendeta']),
             )
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.leaflet-assets'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('filament.menu-search'))
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
