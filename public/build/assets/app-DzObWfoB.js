@@ -1,0 +1,1 @@
+var e=document.querySelector(`meta[name="sw"]`);`serviceWorker`in navigator&&e&&window.addEventListener(`load`,()=>{navigator.serviceWorker.register(e.content).catch(()=>{})});
