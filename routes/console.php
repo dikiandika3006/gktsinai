@@ -56,15 +56,34 @@ Artisan::command('sij:fu-reminder', function () {
 })->purpose('Kirim pengingat follow-up tamu yang lewat batas waktu');
 
 // DJ-14: antrekan geocoding untuk KK yang belum diproses.
-Artisan::command('sij:geocode {--all : Proses ulang semua kecuali pin manual}', function () {
-    $q = Family::whereNotNull('address')->where('geocode_status', '!=', 'manual');
+// --sync: proses langsung tanpa queue worker (hosting tanpa SSH), --limit: batasi jumlah per jalan.
+Artisan::command('sij:geocode {--all : Proses ulang semua kecuali pin manual} {--sync : Proses langsung, tanpa queue} {--limit=0}', function () {
+    $q = Family::whereNotNull('address')->where('geocode_status', '!=', 'manual')->orderBy('id');
     if (! $this->option('all')) {
         $q->where('geocode_status', 'belum');
     }
+    if ((int) $this->option('limit') > 0) {
+        $q->limit((int) $this->option('limit'));
+    }
     $ids = $q->pluck('id');
-    $ids->each(fn ($id) => GeocodeFamily::dispatch($id));
-    $this->info($ids->count().' KK masuk antrean geocoding. Pastikan queue worker berjalan.');
-})->purpose('Antrekan geocoding alamat KK');
+    if (! $this->option('sync')) {
+        $ids->each(fn ($id) => GeocodeFamily::dispatch($id));
+        $this->info($ids->count().' KK masuk antrean geocoding. Pastikan queue worker berjalan.');
+
+        return;
+    }
+    @set_time_limit(0);
+    foreach ($ids as $i => $id) {
+        if ($i > 0) {
+            usleep(1_100_000); // Nominatim: maks. 1 permintaan per detik
+        }
+        (new GeocodeFamily($id))->handle();
+        $f = Family::find($id);
+        $this->line(sprintf('%s  %-9s  %s', $f->code, $f->geocode_status, \Illuminate\Support\Str::limit((string) $f->address, 60)));
+    }
+    $sisa = Family::whereNotNull('address')->where('geocode_status', 'belum')->count();
+    $this->info($ids->count().' KK diproses. Sisa belum diproses: '.$sisa);
+})->purpose('Geocoding alamat KK (antrean, atau langsung dengan --sync)');
 
 // Hitung ulang daftar perhatian (KH-07) untuk dashboard.
 Artisan::command('sij:refresh-attention', function () {

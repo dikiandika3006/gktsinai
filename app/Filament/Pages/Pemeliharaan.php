@@ -86,6 +86,11 @@ class Pemeliharaan extends Page
                     Storage::disk('local')->delete($data['file']);
                 }),
 
+            Action::make('geocode')->label('Proses pin alamat')->icon(Heroicon::OutlinedMapPin)->color('gray')
+                ->modalDescription('Mencari titik peta (OpenStreetMap) untuk KK yang belum punya pin, 25 KK per klik (sekitar 1 menit). Klik lagi sampai sisa 0. Pin manual tidak diubah.')
+                ->requiresConfirmation()
+                ->action(fn () => $this->run('Proses pin alamat', 'sij:geocode', ['--sync' => true, '--limit' => 25])),
+
             Action::make('cache')->label('Bersihkan cache')->icon(Heroicon::OutlinedArrowPath)->color('gray')
                 ->action(fn () => $this->run('Bersihkan cache', 'optimize:clear')),
 

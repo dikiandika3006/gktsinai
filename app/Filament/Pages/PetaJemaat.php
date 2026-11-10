@@ -84,6 +84,7 @@ class PetaJemaat extends Page
                     'attention' => $perhatianMember->has($f->id) || $belumDikunjungi,
                     'attention_reason' => trim(($perhatianMember->has($f->id) ? 'Ada anggota absen 3x. ' : '').($belumDikunjungi ? 'Belum dikunjungi >12 bulan.' : '')),
                     'url' => FamilyResource::getUrl('view', ['record' => $f]),
+                    'gmaps' => $f->google_maps_url,
                 ];
             })->values()->all();
     }

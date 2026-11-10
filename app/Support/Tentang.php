@@ -14,6 +14,7 @@ class Tentang
             'judul' => 'Data Jemaat & KK',
             'aturan' => [
                 'Kode jemaat dibuat otomatis berformat SIBxxxx, melanjutkan nomor terakhir. Kode KK berformat KK-xxx.',
+                'Pin lokasi KK dicari otomatis dari alamat. Status: Tepat (tingkat jalan), Perkiraan (tingkat kelurahan/wilayah, perlu dicek), Gagal (pasang manual), Pin manual (tidak diubah sistem).',
                 'Status keanggotaan: Sidi, Baptis, Anggota (sakramen belum dilengkapi), Simpatisan, Atestasi Keluar, Meninggal. Status keaktifan: Aktif / Pasif.',
                 'Status Atestasi Keluar dan Meninggal otomatis tidak punya status keaktifan.',
                 'Nomor HP disimpan dalam format internasional (+62...) supaya bisa langsung dibuka di WhatsApp.',
@@ -90,6 +91,7 @@ class Tentang
         [
             'tanggal' => '10 November 2026',
             'perubahan' => [
+                'Pin alamat KK (OpenStreetMap): dicari bertahap (alamat dibersihkan → nama jalan → wilayah); tombol "Google Maps" di KK, daftar KK, dan popup Peta Jemaat; tombol "Proses pin alamat" di Pemeliharaan (tanpa SSH).',
                 'Absensi (PWA): Ibadah Umum dipilih per kebaktian (KU I / KU II / Gabungan). Daftar Hadir menampilkan semua kebaktian hari itu per bagian yang bisa dibuka-tutup; jemaat yang sudah hadir di satu kebaktian cukup diabsen sekali dan dihitung sekali.',
                 'Perbaikan error "Attempt to read property alias on null" saat edit anggota di halaman KK.',
                 'Data jemaat diperbarui dari sheet "Data Jemaat Komprehensif" (385 orang, 129 KK); SIB0337 digabung ke SIB0121 sesuai catatan Excel; kolom Catatan ikut diimpor.',

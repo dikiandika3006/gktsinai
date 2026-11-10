@@ -64,7 +64,9 @@
                 + `<div style='margin:.3rem 0'>${p.members.map(m => this.esc(m)).join('<br>')}</div>`
                 + `Terakhir dikunjungi: ${p.last_visit ?? 'belum pernah'}<br>`
                 + (p.attention ? `<span style='color:#dc2626'>${this.esc(p.attention_reason)}</span><br>` : '')
-                + `<a href='${p.url}' style='color:#4f46e5;text-decoration:underline'>Buka profil KK</a></div>`;
+                + `<a href='${p.url}' style='color:#4f46e5;text-decoration:underline'>Buka profil KK</a>`
+                + (p.gmaps ? ` &middot; <a href='${p.gmaps}' target='_blank' rel='noopener' style='color:#4f46e5;text-decoration:underline'>Google Maps</a>` : '')
+                + `</div>`;
         },
         render(points, fit) {
             ['pins', 'cluster', 'attention'].forEach(k => this.layers[k].clearLayers());

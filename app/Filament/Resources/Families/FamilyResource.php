@@ -108,6 +108,9 @@ class FamilyResource extends Resource
                     ->color(fn ($state) => match ($state) {
                         'tepat', 'manual' => 'success', 'perkiraan' => 'warning', 'gagal' => 'danger', default => 'gray'
                     }),
+                TextEntry::make('google_maps_url')->label('Google Maps')->visible($kontak)
+                    ->state(fn (Family $record) => $record->google_maps_url ? 'Buka di Google Maps' : null)->placeholder('-')
+                    ->url(fn (Family $record) => $record->google_maps_url, true)->color('primary')->icon(Heroicon::OutlinedMapPin),
                 TextEntry::make('notes')->label('Catatan')->columnSpanFull(),
             ]),
             Section::make('Lokasi')->collapsible()->visible($kontak)->schema([
@@ -153,6 +156,9 @@ class FamilyResource extends Resource
                 EditAction::make(),
                 Action::make('pdf')->label('Buku induk KK')->icon(Heroicon::OutlinedDocumentText)
                     ->url(fn (Family $r) => route('pdf.family', $r), true),
+                Action::make('gmaps')->label('Google Maps')->icon(Heroicon::OutlinedMapPin)
+                    ->visible(fn (Family $record) => $kontak && $record->google_maps_url)
+                    ->url(fn (Family $record) => $record->google_maps_url, true),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -97,6 +97,19 @@ class Family extends Model
         return $this->hasOne(Visit::class)->where('status', 'selesai')->latestOfMany('realized_date');
     }
 
+    /** Link Google Maps: titik pin bila sudah ada, kalau belum cari berdasarkan alamat. */
+    public function getGoogleMapsUrlAttribute(): ?string
+    {
+        if ($this->latitude !== null && $this->longitude !== null) {
+            return 'https://www.google.com/maps/search/?api=1&query='.$this->latitude.','.$this->longitude;
+        }
+        if (! $this->address || preg_match('/belum ada alamat/i', $this->address)) {
+            return null;
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($this->address.', '.config('sij.geocode_suffix'));
+    }
+
     public function getDisplayNameAttribute(): string
     {
         return $this->code.' - '.($this->head?->name ?? $this->members()->orderBy('id')->value('name') ?? 'Tanpa kepala keluarga');
