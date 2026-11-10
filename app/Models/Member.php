@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Services\DuplicateFinder;
+use App\Support\HakAkses;
 use App\Support\Opsi;
 use App\Support\Telepon;
 use Illuminate\Database\Eloquent\Builder;
@@ -196,7 +197,7 @@ class Member extends Model
 
     public function scopeVisibleTo(Builder $q, User $user): Builder
     {
-        if ($user->lihatSemuaJemaat()) {
+        if ($user->lihatSemuaJemaat() || HakAkses::lihatSemua($user, 'jemaat')) {
             return $q;
         }
         if ($user->hasRole('koordinator_wilayah') && $user->region_id) {

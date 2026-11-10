@@ -6,10 +6,10 @@ use App\Filament\Resources\OrgUnits\OrgUnitResource;
 use App\Models\OrgPeriod;
 use App\Models\OrgPosition;
 use App\Models\OrgUnit;
+use App\Support\HakAkses;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -41,7 +41,7 @@ class StrukturOrganisasi extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat();
+        return HakAkses::boleh('struktur-organisasi');
     }
 
     protected function getHeaderActions(): array

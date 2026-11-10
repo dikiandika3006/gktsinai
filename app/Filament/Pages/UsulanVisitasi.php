@@ -6,6 +6,7 @@ use App\Models\Family;
 use App\Models\Region;
 use App\Models\Visit;
 use App\Services\VisitSuggestionService;
+use App\Support\HakAkses;
 use App\Support\Opsi;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -39,7 +40,7 @@ class UsulanVisitasi extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->peran('super_admin', 'sekretariat', 'pendeta', 'majelis', 'koordinator_wilayah');
+        return HakAkses::boleh('usulan-visitasi');
     }
 
     protected function getViewData(): array

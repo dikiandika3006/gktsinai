@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\HakAkses;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
@@ -35,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Super Admin boleh segalanya kecuali hak khusus pendeta (catatan rahasia) yang dicek manual.
         Gate::before(fn ($user, $ability) => $user->isSuperAdmin() && $ability !== 'readConfidential' ? true : null);
+        // Matriks Hak Akses (Pengaturan → Hak Akses); sel yang belum diatur diserahkan ke policy.
+        Gate::before(fn ($user, $ability, $args) => HakAkses::gate($user, $ability, $args));
 
         // Format tanggal dd/mm/yyyy di seluruh panel.
         DatePicker::configureUsing(fn (DatePicker $c) => $c->native(false)->displayFormat('d/m/Y'));

@@ -37,6 +37,7 @@ class DemoSeeder extends Seeder
             ['Tim Visitasi 1', 'visitasi@gktsinai.test', 'tim_visitasi'],
             ['Penyambut 1', 'penyambut@gktsinai.test', 'penyambut'],
             ['Petugas Absensi 1', 'absensi@gktsinai.test', 'petugas_absensi'],
+            ['Tim Ibadah 1', 'ibadah@gktsinai.test', 'tim_ibadah'],
         ];
         foreach ($staff as [$n, $e, $r]) {
             User::firstOrCreate(['email' => $e], ['name' => $n, 'username' => strstr($e, '@', true), 'password' => 'password'])->assignRole($r);

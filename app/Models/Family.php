@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\GeocodeFamily;
 use App\Models\Concerns\Auditable;
+use App\Support\HakAkses;
 use App\Support\Telepon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -131,7 +132,7 @@ class Family extends Model
 
     public function scopeVisibleTo(Builder $q, User $user): Builder
     {
-        if ($user->lihatSemuaJemaat()) {
+        if ($user->lihatSemuaJemaat() || HakAkses::lihatSemua($user, 'kk')) {
             return $q;
         }
         if ($user->hasRole('koordinator_wilayah') && $user->region_id) {

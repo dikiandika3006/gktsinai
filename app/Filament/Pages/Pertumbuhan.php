@@ -8,6 +8,7 @@ use App\Filament\Widgets\CommissionCompositionChart;
 use App\Filament\Widgets\GrowthChart;
 use App\Models\GrowthTarget;
 use App\Services\GrowthService;
+use App\Support\HakAkses;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -30,7 +31,7 @@ class Pertumbuhan extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat();
+        return HakAkses::boleh('pertumbuhan');
     }
 
     protected function getHeaderActions(): array

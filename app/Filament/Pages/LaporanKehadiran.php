@@ -4,11 +4,13 @@ namespace App\Filament\Pages;
 
 use App\Exports\ArrayExport;
 use App\Filament\Widgets\AttendanceTrendChart;
+use App\Filament\Widgets\HadirBaruKembali;
 use App\Models\ActivitySession;
 use App\Models\ActivityType;
 use App\Models\Attendance;
 use App\Models\Commission;
 use App\Models\Member;
+use App\Support\HakAkses;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -46,12 +48,12 @@ class LaporanKehadiran extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat() || auth()->user()->peran('koordinator_wilayah', 'koordinator_komisi');
+        return HakAkses::boleh('laporan-kehadiran');
     }
 
     protected function getHeaderWidgets(): array
     {
-        return [AttendanceTrendChart::class, \App\Filament\Widgets\HadirBaruKembali::class];
+        return [AttendanceTrendChart::class, HadirBaruKembali::class];
     }
 
     public function getHeaderWidgetsColumns(): int|array

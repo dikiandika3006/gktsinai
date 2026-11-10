@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Exports\ArrayExport;
 use App\Models\ServantAlias;
 use App\Models\ServiceAssignment;
+use App\Support\HakAkses;
 use App\Support\Opsi;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -44,7 +45,7 @@ class BebanPelayanan extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat();
+        return HakAkses::boleh('beban-pelayanan');
     }
 
     /** Satu baris per orang (jemaat terdaftar, atau nama di jadwal bila belum terdaftar). */

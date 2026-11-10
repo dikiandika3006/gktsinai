@@ -112,6 +112,7 @@ class Opsi
         'tim_visitasi' => 'Tim Visitasi',
         'penyambut' => 'Petugas Penyambut',
         'petugas_absensi' => 'Petugas Absensi',
+        'tim_ibadah' => 'Tim Ibadah',
     ];
 
     /** Peran pelayanan di jadwal ibadah (urutan = urutan baris di jadwal). */

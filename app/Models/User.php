@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\HakAkses;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
@@ -96,12 +97,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /** Boleh mengisi/mengimport jadwal pelayanan dan menghubungkan nama pelayan. */
     public function kelolaJadwal(): bool
     {
-        return $this->peran('super_admin', 'sekretariat');
+        // Matriks Hak Akses (menu Jadwal Pelayanan = Kelola) bila diatur, selain itu aturan lama.
+        $level = HakAkses::levelUser($this, 'jadwal-ibadah');
+
+        return $level !== null ? $level >= HakAkses::KELOLA : $this->peran('super_admin', 'sekretariat');
     }
 
     public function kelolaKehadiran(): bool
     {
-        return $this->peran('super_admin', 'sekretariat', 'koordinator_wilayah', 'koordinator_komisi', 'penyambut', 'petugas_absensi');
+        if ($this->peran('petugas_absensi')) {
+            return true;
+        }
+        $level = HakAkses::levelUser($this, 'absensi');
+
+        return $level !== null ? $level >= HakAkses::LIHAT
+            : $this->peran('super_admin', 'sekretariat', 'koordinator_wilayah', 'koordinator_komisi', 'penyambut');
     }
 
     /** Hanya berperan Petugas Absensi: cukup layar absensi, tanpa panel admin. */

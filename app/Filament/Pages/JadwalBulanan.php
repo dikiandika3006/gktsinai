@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\WorshipSchedules\Pages\ListWorshipSchedules;
 use App\Filament\Resources\WorshipSchedules\WorshipScheduleResource;
 use App\Models\WorshipSchedule;
+use App\Services\PemeriksaJadwal;
+use App\Support\HakAkses;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Pages\Page;
@@ -32,7 +34,7 @@ class JadwalBulanan extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat();
+        return HakAkses::boleh('jadwal-bulanan');
     }
 
     public function geser(int $n): void
@@ -56,7 +58,7 @@ class JadwalBulanan extends Page
         $jadwal = WorshipSchedule::with(['assignments.member', 'assignments.alias'])
             ->whereBetween('date', [$awal->toDateString(), $awal->copy()->endOfMonth()->toDateString()])
             ->orderBy('date')->get();
-        $cek = app(\App\Services\PemeriksaJadwal::class)->periksa($jadwal);
+        $cek = app(PemeriksaJadwal::class)->periksa($jadwal);
 
         return [
             'judul' => $awal->translatedFormat('F Y'),

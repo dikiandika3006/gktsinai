@@ -7,6 +7,7 @@ use App\Models\Commission;
 use App\Models\Family;
 use App\Models\Region;
 use App\Services\AttendanceService;
+use App\Support\HakAkses;
 use App\Support\Opsi;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -38,7 +39,7 @@ class PetaJemaat extends Page
     public static function canAccess(): bool
     {
         // Koordinat hanya untuk peran yang boleh melihat alamat.
-        return auth()->user()->lihatKontak();
+        return HakAkses::boleh('peta-jemaat');
     }
 
     public function updated(): void

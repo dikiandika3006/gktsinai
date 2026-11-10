@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Member;
 use App\Services\DuplicateFinder;
+use App\Support\HakAkses;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -24,7 +25,7 @@ class DuplikatJemaat extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->peran('super_admin', 'sekretariat');
+        return HakAkses::boleh('duplikat-jemaat');
     }
 
     /** Menu hanya tampil bila ada kemungkinan duplikat, dengan badge merah jumlahnya. */

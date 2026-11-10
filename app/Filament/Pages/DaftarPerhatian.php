@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Member;
 use App\Models\Visit;
 use App\Services\AttendanceService;
+use App\Support\HakAkses;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -29,7 +30,7 @@ class DaftarPerhatian extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat() || auth()->user()->peran('koordinator_wilayah', 'koordinator_komisi');
+        return HakAkses::boleh('daftar-perhatian');
     }
 
     public function setujuiPasif(): void

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\ServiceAssignment;
 use App\Models\WorshipSchedule;
+use App\Support\HakAkses;
 use App\Support\Opsi;
 use BackedEnum;
 use Carbon\Carbon;
@@ -38,7 +39,7 @@ class KaleidoskopPelayanan extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->lihatSemuaJemaat();
+        return HakAkses::boleh('kaleidoskop');
     }
 
     /** Jumlah ibadah dalam satu jadwal: gabungan = 1, KU I + KU II = 2, belum ada petugas = 0. */

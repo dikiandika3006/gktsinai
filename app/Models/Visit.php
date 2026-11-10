@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\HakAkses;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -69,7 +70,7 @@ class Visit extends Model
 
     public function scopeVisibleTo(Builder $q, User $user): Builder
     {
-        if ($user->peran('super_admin', 'sekretariat', 'pendeta', 'majelis')) {
+        if ($user->peran('super_admin', 'sekretariat', 'pendeta', 'majelis') || HakAkses::lihatSemua($user, 'kunjungan')) {
             return $q;
         }
         if ($user->hasRole('koordinator_wilayah') && $user->region_id) {
