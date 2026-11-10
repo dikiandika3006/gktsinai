@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Family;
 use App\Models\Guest;
 use App\Models\Member;
 use App\Models\MemberEvent;
@@ -146,7 +147,7 @@ class GrowthService
             'tercatat' => Member::tercatat()->count(),
             'anggota' => Member::whereIn('membership_status', Opsi::ANGGOTA_RESMI)->count(),
             'aktif' => Member::aktif()->count(),
-            'kk' => \App\Models\Family::whereHas('members', fn ($q) => $q->tercatat())->count(),
+            'kk' => Family::whereHas('members', fn ($q) => $q->tercatat())->count(),
         ];
     }
 }

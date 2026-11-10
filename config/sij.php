@@ -31,7 +31,7 @@ return [
 
     // Template pesan WhatsApp (TF-08). {nama} diganti nama tamu.
     'wa_templates' => [
-        'sambutan' => "Shalom {nama}, terima kasih sudah beribadah bersama kami di GKT Jemaat Sinai Batu. Kiranya Tuhan memberkati. Kami senang bila bisa bertemu lagi minggu depan.",
-        'undangan' => "Shalom {nama}, kami mengundang Bapak/Ibu/Saudara untuk beribadah bersama di GKT Jemaat Sinai Batu setiap hari Minggu. Tuhan memberkati.",
+        'sambutan' => 'Shalom {nama}, terima kasih sudah beribadah bersama kami di GKT Jemaat Sinai Batu. Kiranya Tuhan memberkati. Kami senang bila bisa bertemu lagi minggu depan.',
+        'undangan' => 'Shalom {nama}, kami mengundang Bapak/Ibu/Saudara untuk beribadah bersama di GKT Jemaat Sinai Batu setiap hari Minggu. Tuhan memberkati.',
     ],
 ];

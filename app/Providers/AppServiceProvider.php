@@ -3,13 +3,14 @@
 namespace App\Providers;
 
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\DatePicker;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         // HTTPS wajib di produksi.
         if ($this->app->isProduction()) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
         Model::preventLazyLoading(false);
 

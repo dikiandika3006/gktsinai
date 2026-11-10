@@ -30,11 +30,11 @@ class AttendancesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($q) => $q->with(['member.family.region', 'guest', 'user']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['member.family.region', 'guest', 'user']))
             ->defaultSort('checked_in_at', 'desc')
             ->columns([
                 TextColumn::make('nama')->label('Nama')->state(fn (Attendance $a) => $a->member?->name ?? ($a->guest ? $a->guest->name.' (tamu)' : '-'))
-                    ->searchable(query: fn ($q, $search) => $q->where(fn ($w) => $w->whereHas('member', fn ($m) => $m->search($search))
+                    ->searchable(query: fn ($query, $search) => $query->where(fn ($w) => $w->whereHas('member', fn ($m) => $m->search($search))
                         ->orWhereHas('guest', fn ($g) => $g->where('name', 'like', "%{$search}%")))),
                 TextColumn::make('member.code')->label('Kode'),
                 TextColumn::make('member.family.region.name')->label('Wilayah'),

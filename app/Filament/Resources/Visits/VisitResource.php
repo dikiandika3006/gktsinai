@@ -63,7 +63,7 @@ class VisitResource extends Resource
                     ->required(fn (Get $get) => ! $get('member_id')),
                 Select::make('member_id')->label('Orang (opsional)')
                     ->options(fn (Get $get) => Member::query()->tercatat()
-                        ->when($get('family_id'), fn ($q, $f) => $q->where('family_id', $f))
+                        ->when($get('family_id'), fn ($query, $f) => $query->where('family_id', $f))
                         ->orderBy('name')->limit(500)->pluck('name', 'id'))
                     ->searchable()->helperText('Kosongkan untuk kunjungan per KK.'),
                 Select::make('type')->label('Jenis')->options(Opsi::JENIS_VISITASI)->required()
@@ -121,13 +121,15 @@ class VisitResource extends Resource
             ->columns([
                 TextColumn::make('planned_date')->label('Rencana')->date('d/m/Y')->sortable(),
                 TextColumn::make('target_name')->label('KK / Orang')
-                    ->searchable(query: fn ($q, $s) => $q->whereHas('family', fn ($f) => $f->where('code', 'like', "%{$s}%")
-                        ->orWhereHas('head', fn ($h) => $h->where('name', 'like', "%{$s}%")))->orWhereHas('member', fn ($m) => $m->where('name', 'like', "%{$s}%"))),
+                    ->searchable(query: fn ($query, $search) => $query->whereHas('family', fn ($f) => $f->where('code', 'like', "%{$search}%")
+                        ->orWhereHas('head', fn ($h) => $h->where('name', 'like', "%{$search}%")))->orWhereHas('member', fn ($m) => $m->where('name', 'like', "%{$search}%"))),
                 TextColumn::make('family.region.name')->label('Wilayah'),
                 TextColumn::make('type')->label('Jenis')->badge()->formatStateUsing(fn ($state) => Opsi::label(Opsi::JENIS_VISITASI, $state)),
                 TextColumn::make('team.name')->label('Tim')->badge(),
                 TextColumn::make('status')->badge()->formatStateUsing(fn ($state) => Opsi::label(Opsi::STATUS_VISITASI, $state))
-                    ->color(fn ($state) => match ($state) { 'selesai' => 'success', 'batal' => 'gray', default => 'warning' }),
+                    ->color(fn ($state) => match ($state) {
+                        'selesai' => 'success', 'batal' => 'gray', default => 'warning'
+                    }),
                 TextColumn::make('realized_date')->label('Realisasi')->date('d/m/Y')->toggleable(),
                 TextColumn::make('report.id')->label('Laporan')->formatStateUsing(fn ($state) => $state ? 'Ada' : null)->placeholder('Belum'),
             ])
@@ -135,7 +137,7 @@ class VisitResource extends Resource
                 SelectFilter::make('status')->options(Opsi::STATUS_VISITASI),
                 SelectFilter::make('type')->label('Jenis')->options(Opsi::JENIS_VISITASI),
                 SelectFilter::make('region')->label('Wilayah')->relationship('family.region', 'name'),
-                Filter::make('saya')->label('Tugas saya')->toggle()->query(fn (Builder $q) => $q->whereHas('team', fn ($t) => $t->whereKey(auth()->id()))),
+                Filter::make('saya')->label('Tugas saya')->toggle()->query(fn (Builder $query) => $query->whereHas('team', fn ($t) => $t->whereKey(auth()->id()))),
             ])
             ->recordActions([
                 self::reportAction(),

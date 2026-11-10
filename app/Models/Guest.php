@@ -57,7 +57,7 @@ class Guest extends Model
     /** Jumlah kunjungan = kunjungan pertama + check-in pada hari berbeda. */
     public function getVisitCountAttribute(): int
     {
-        $tanggal = $this->attendances()->with('session')->get()
+        $tanggal = $this->attendances()->with('session')->get()->toBase()
             ->map(fn ($a) => $a->session?->date?->toDateString())
             ->push($this->first_visit_at?->toDateString())
             ->filter()->unique();

@@ -49,7 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function visits(): BelongsToMany
     {
-        return $this->belongsToMany(Visit::class);
+        return $this->belongsToMany(Visit::class, 'visit_user');
     }
 
     // ---- Hak akses (bagian 3 SRS) ----

@@ -1,58 +1,81 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistem Informasi Jemaat (SIJ) - GKT Jemaat Sinai Batu
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web untuk mengelola data jemaat, pertumbuhan, kehadiran, tamu & follow-up, visitasi, dan peta persebaran jemaat.
+Dibangun sesuai `SRS/SRS_Sistem_Informasi_Jemaat_GKT_Sinai_Batu.docx`.
 
-## About Laravel
+**Teknologi:** PHP 8.3, Laravel 13, Filament 5 (panel admin), Blade + Tailwind (halaman HP), MySQL 8, spatie/laravel-permission,
+maatwebsite/excel, barryvdh/laravel-dompdf, Leaflet + OpenStreetMap.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Menjalankan di lokal (Laragon)
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install && npm run build
+cp .env.example .env && php artisan key:generate   # sesuaikan DB_*
+php artisan migrate --seed                          # peran, komisi, jenis kegiatan, wilayah awal, super admin
+php artisan db:seed --class=DemoSeeder              # (opsional) data contoh untuk mencoba
+php artisan queue:work                              # untuk geocoding & notifikasi
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+- Panel admin: `/admin` (super admin awal dari `SIJ_ADMIN_EMAIL` / `SIJ_ADMIN_PASSWORD`, default `admin@gktsinai.test` / `password`).
+  Super Admin & Pendeta **wajib memasang 2FA** (aplikasi authenticator) saat login pertama.
+- Akun contoh (DemoSeeder, password `password`): `sekretariat@`, `pendeta@`, `majelis@`, `visitasi@`, `penyambut@gktsinai.test`.
+- Absensi petugas (PWA): `/absen` - bisa "Tambahkan ke layar utama" dari Chrome Android.
+- Form tamu: `/tamu`. Check-in QR mandiri: `/c/{token}` (QR ditampilkan dari menu Sesi Kegiatan).
+- Tes: `php artisan test` (memakai database `gktsinai_test`).
 
-## Contributing
+## Peta modul ke SRS
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Modul | Menu / lokasi | Kode SRS |
+|---|---|---|
+| Data Jemaat | Jemaat, Kepala Keluarga (KK), Komisi, Import Data Jemaat, Kemungkinan Duplikat | DJ-01 s.d. DJ-17, DJ-20 |
+| Peta | Peta Persebaran, Wilayah (gambar batas area) | DJ-14, DJ-15, PT-01 s.d. PT-06 |
+| Pertumbuhan | Pertumbuhan Jemaat, Target Pertumbuhan, dashboard | PJ-01 s.d. PJ-06 |
+| Kehadiran | Sesi Kegiatan, Absensi (HP petugas), QR mandiri, Laporan Kehadiran, Daftar Perhatian | KH-01 s.d. KH-09 |
+| Tamu & FU | Jemaat Tamu (log kontak, tombol WA, konversi), form `/tamu` | TF-01 s.d. TF-09 |
+| Visitasi | Jadwal Kunjungan (laporan + tanda rahasia), Usulan & Cakupan Visitasi | VS-01 s.d. VS-05, VS-07 |
+| Keamanan | Peran per modul & wilayah, log audit, 2FA, ekspor kontak terbatas | Bagian 3 & 6 |
 
-## Code of Conduct
+Belum dibuat (prioritas N di SRS): DJ-18 foto, DJ-19 form update mandiri, VS-06 urutan rute, PT-07 ekspor peta, integrasi WhatsApp gateway
+(saat ini tombol "buka WA" dengan template pesan).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Aturan penting
 
-## Security Vulnerabilities
+- Kode jemaat `SIBxxxx` dan KK `KK-xxx` dibuat otomatis melanjutkan nomor terakhir.
+- Status dipisah: **keanggotaan** (sidi/baptis/anggota/simpatisan/keluar/meninggal) dan **keaktifan** (aktif/pasif).
+- Umur & kelompok kategorial selalu dihitung dari tanggal lahir. HP disimpan format `+62...`.
+- Batas umur/kelamin komisi diatur di menu **Komisi** (tanpa programmer). Sistem mengusulkan, admin menetapkan.
+- Catatan visitasi bertanda rahasia hanya terbaca pendeta & penulisnya; majelis hanya melihat ringkasan.
+- Ekspor Excel berisi HP & alamat hanya untuk Super Admin, Sekretariat, Pendeta.
+- Pengaturan lain (ambang absen 3x, usia lansia, template WA, dsb.) di `config/sij.php`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Langkah migrasi data (bagian 7 SRS)
 
-## License
+1. Rapikan alamat KK di Excel (14 orang "Belum Ada Alamat", KK-002 yang terpecah).
+2. Menu **Import Data Jemaat** -> unggah `Data_Jemaat_Lengkap.xlsx`, pilih sheet *Semua Data Jemaat*, periksa pemetaan kolom, **Pratinjau**.
+   Importer otomatis: membuang tanggal `-`/`1900-01-01`, Title Case nama kapital, mencocokkan ejaan wilayah yang salah ketik,
+   memetakan status lama ke keanggotaan + keaktifan, membuat baris mutasi (nikah, atestasi, wafat) dan baptis/sidi "belum diketahui".
+3. Cek menu **Kemungkinan Duplikat** (mis. Chandra Kurniawan) dan gabungkan bila perlu.
+4. Jalankan queue worker agar geocoding berjalan (`php artisan sij:geocode`); pin manual KK berstatus perkiraan/gagal.
+5. Gambar batas wilayah di menu **Wilayah**, lalu di daftar KK pilih semua -> **Terapkan wilayah usulan**.
+6. Komisi -> anggota -> **Usulan dari umur & kelamin** untuk keanggotaan komisi awal.
+7. Cocokkan total per status di menu **Pertumbuhan** dengan sheet *Rekapitulasi Statistik*, sekretariat memverifikasi sampel, go-live.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Deploy ke hosting
+
+Syarat: PHP 8.3, MySQL 8 / MariaDB 10.11, Nginx/Apache (document root `public/`), SSL, cron, dan queue worker.
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci && npm run build
+php artisan migrate --force --seed
+php artisan storage:link
+php artisan optimize
+```
+
+- `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...` (HTTPS dipaksa di produksi), isi `NOMINATIM_EMAIL`.
+- Cron: `* * * * * cd /path && php artisan schedule:run >> /dev/null 2>&1`
+  (pengingat FU tiap jam, geocoding 01.00, daftar perhatian 02.00, backup DB 03.00).
+- Queue worker (supervisor/systemd): `php artisan queue:work --tries=3`.
+- Backup: `sij:backup` menyimpan `storage/app/backups/*.sql.gz` 30 hari; isi `BACKUP_DISK` (mis. disk S3/FTP di
+  `config/filesystems.php`) untuk salinan di lokasi terpisah. Uji restore tiap 3 bulan.

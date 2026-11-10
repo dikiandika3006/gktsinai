@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Imports\RawImport;
 use App\Models\Family;
 use App\Models\Member;
 use App\Models\MemberEvent;
@@ -62,7 +63,7 @@ class MemberImporter
     /** @return array{sheets: array<int,string>, headings: array<int,string>, rows: array<int,array>} */
     public function read(string $path, int $sheet = 0): array
     {
-        $all = Excel::toArray(new \stdClass, $path);
+        $all = Excel::toArray(new RawImport, $path);
         $data = $all[$sheet] ?? [];
         // Cari baris header: baris pertama yang punya >= 3 sel terisi.
         $headerIndex = 0;

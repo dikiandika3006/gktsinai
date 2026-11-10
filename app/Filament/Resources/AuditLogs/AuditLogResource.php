@@ -50,7 +50,7 @@ class AuditLogResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn ($q) => $q->with('user'))
+            ->modifyQueryUsing(fn ($query) => $query->with('user'))
             ->columns([
                 TextColumn::make('created_at')->label('Waktu')->dateTime('d/m/Y H:i')->sortable(),
                 TextColumn::make('user.name')->label('Oleh')->placeholder('Sistem'),

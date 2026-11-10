@@ -20,7 +20,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -76,7 +75,7 @@ class FamilyResource extends Resource
                 Textarea::make('address')->label('Alamat rumah')->rows(2)->columnSpan(2)
                     ->helperText('Perubahan alamat akan memicu geocoding ulang otomatis.'),
                 Select::make('head_member_id')->label('Kepala keluarga')
-                    ->relationship('head', 'name', fn (Builder $q, ?Family $record) => $q->where('family_id', $record?->id ?? 0))
+                    ->relationship('head', 'name', fn (Builder $query, ?Family $record) => $query->where('family_id', $record?->id ?? 0))
                     ->visibleOn('edit'),
                 Textarea::make('notes')->label('Catatan')->rows(2)->columnSpanFull(),
             ]),
@@ -106,7 +105,9 @@ class FamilyResource extends Resource
                 TextEntry::make('lastVisit.realized_date')->label('Terakhir dikunjungi')->date('d/m/Y')->placeholder('Belum pernah'),
                 TextEntry::make('geocode_status')->label('Geocoding')->badge()->visible($kontak)
                     ->formatStateUsing(fn ($state) => Opsi::label(Opsi::GEOCODE, $state))
-                    ->color(fn ($state) => match ($state) { 'tepat', 'manual' => 'success', 'perkiraan' => 'warning', 'gagal' => 'danger', default => 'gray' }),
+                    ->color(fn ($state) => match ($state) {
+                        'tepat', 'manual' => 'success', 'perkiraan' => 'warning', 'gagal' => 'danger', default => 'gray'
+                    }),
                 TextEntry::make('notes')->label('Catatan')->columnSpanFull(),
             ]),
             Section::make('Lokasi')->collapsible()->visible($kontak)->schema([
@@ -130,7 +131,9 @@ class FamilyResource extends Resource
                 TextColumn::make('phone')->label('HP')->visible($kontak)->toggleable(),
                 TextColumn::make('geocode_status')->label('Lokasi')->badge()->visible($kontak)
                     ->formatStateUsing(fn ($state) => Opsi::label(Opsi::GEOCODE, $state))
-                    ->color(fn ($state) => match ($state) { 'tepat', 'manual' => 'success', 'perkiraan' => 'warning', 'gagal' => 'danger', default => 'gray' }),
+                    ->color(fn ($state) => match ($state) {
+                        'tepat', 'manual' => 'success', 'perkiraan' => 'warning', 'gagal' => 'danger', default => 'gray'
+                    }),
                 TextColumn::make('lastVisit.realized_date')->label('Terakhir dikunjungi')->date('d/m/Y')->placeholder('Belum pernah'),
             ])
             ->filters([
@@ -138,12 +141,12 @@ class FamilyResource extends Resource
                 SelectFilter::make('geocode_status')->label('Status lokasi')->options(Opsi::GEOCODE),
                 SelectFilter::make('wilayah_usulan')->label('Wilayah usulan berbeda')
                     ->options(['ya' => 'Ada usulan wilayah berbeda'])
-                    ->query(fn (Builder $q, array $data) => $data['value'] ? $q->whereNotNull('suggested_region_id')
-                        ->where(fn ($w) => $w->whereNull('region_id')->orWhereColumn('suggested_region_id', '!=', 'region_id')) : $q),
+                    ->query(fn (Builder $query, array $data) => $data['value'] ? $query->whereNotNull('suggested_region_id')
+                        ->where(fn ($w) => $w->whereNull('region_id')->orWhereColumn('suggested_region_id', '!=', 'region_id')) : $query),
                 SelectFilter::make('kunjungan')->label('Kunjungan')
                     ->options(['lebih12' => 'Belum dikunjungi > 12 bulan'])
-                    ->query(fn (Builder $q, array $data) => $data['value'] ? $q->whereDoesntHave('visits', fn ($v) => $v->where('status', 'selesai')
-                        ->where('realized_date', '>=', today()->subMonths(12))) : $q),
+                    ->query(fn (Builder $query, array $data) => $data['value'] ? $query->whereDoesntHave('visits', fn ($v) => $v->where('status', 'selesai')
+                        ->where('realized_date', '>=', today()->subMonths(12))) : $query),
             ])
             ->recordActions([
                 ViewAction::make(),

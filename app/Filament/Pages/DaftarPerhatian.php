@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Member;
+use App\Models\Visit;
 use App\Services\AttendanceService;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -55,7 +56,7 @@ class DaftarPerhatian extends Page
             'threshold' => config('sij.absence_threshold'),
             'bulan' => config('sij.passive_after_months'),
             'bisaKelola' => auth()->user()->kelolaJemaat(),
-            'bisaJadwal' => auth()->user()->can('create', \App\Models\Visit::class),
+            'bisaJadwal' => auth()->user()->can('create', Visit::class),
         ];
     }
 }

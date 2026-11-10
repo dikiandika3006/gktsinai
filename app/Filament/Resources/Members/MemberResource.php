@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Members;
 
 use App\Exports\MembersExport;
+use App\Filament\Resources\Families\FamilyResource;
 use App\Filament\Resources\Members\Pages\CreateMember;
 use App\Filament\Resources\Members\Pages\EditMember;
 use App\Filament\Resources\Members\Pages\ListMembers;
@@ -15,6 +16,7 @@ use App\Models\Member;
 use App\Models\Region;
 use App\Services\DuplicateFinder;
 use App\Support\Opsi;
+use App\Support\Telepon;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -29,7 +31,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
@@ -103,7 +104,7 @@ class MemberResource extends Resource
             ]),
             Section::make('Keluarga & keanggotaan')->columns(3)->schema([
                 Select::make('family_id')->label('Kepala Keluarga (KK)')
-                    ->relationship('family', 'code', fn (Builder $q) => $q->visibleTo(auth()->user()))
+                    ->relationship('family', 'code', fn (Builder $query) => $query->visibleTo(auth()->user()))
                     ->getOptionLabelFromRecordUsing(fn (Family $f) => $f->display_name)
                     ->searchable(['code', 'address'])->preload()
                     ->createOptionForm([
@@ -141,11 +142,11 @@ class MemberResource extends Resource
                     ->formatStateUsing(fn ($state, Member $r) => trim(($r->birth_place ? $r->birth_place.', ' : '').$state?->format('d/m/Y'))),
                 TextEntry::make('age')->label('Umur')->suffix(' tahun'),
                 TextEntry::make('phone')->label('No. HP')->visible($kontak)
-                    ->url(fn (Member $r) => \App\Support\Telepon::waLink($r->phone), true),
+                    ->url(fn (Member $r) => Telepon::waLink($r->phone), true),
             ]),
             Section::make('Keluarga & keanggotaan')->columns(4)->schema([
                 TextEntry::make('family.display_name')->label('KK')
-                    ->url(fn (Member $r) => $r->family ? \App\Filament\Resources\Families\FamilyResource::getUrl('view', ['record' => $r->family]) : null),
+                    ->url(fn (Member $r) => $r->family ? FamilyResource::getUrl('view', ['record' => $r->family]) : null),
                 TextEntry::make('family_relation')->label('Hubungan')->formatStateUsing(fn ($state) => Opsi::label(Opsi::HUBUNGAN, $state)),
                 TextEntry::make('family.region.name')->label('Wilayah'),
                 TextEntry::make('family.address')->label('Alamat')->visible($kontak),
@@ -178,7 +179,7 @@ class MemberResource extends Resource
                     ->description(fn (Member $r) => $r->alias),
                 TextColumn::make('gender')->label('L/P')->toggleable(),
                 TextColumn::make('age')->label('Umur')
-                    ->sortable(query: fn (Builder $q, string $direction) => $q->orderBy('birth_date', $direction === 'asc' ? 'desc' : 'asc')),
+                    ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('birth_date', $direction === 'asc' ? 'desc' : 'asc')),
                 TextColumn::make('birth_date')->label('Tgl lahir')->date('d/m/Y')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('family.code')->label('KK')->sortable()->searchable(),
                 TextColumn::make('family.region.name')->label('Wilayah')->toggleable(),
@@ -198,13 +199,13 @@ class MemberResource extends Resource
             ->filters([
                 SelectFilter::make('region')->label('Wilayah')->multiple()
                     ->options(fn () => Region::orderBy('name')->pluck('name', 'id')->put('none', 'Belum didefinisikan'))
-                    ->query(function (Builder $q, array $data) {
+                    ->query(function (Builder $query, array $data) {
                         $v = $data['values'] ?? [];
                         if (! $v) {
-                            return $q;
+                            return $query;
                         }
 
-                        return $q->where(function ($w) use ($v) {
+                        return $query->where(function ($w) use ($v) {
                             $ids = array_filter($v, fn ($x) => $x !== 'none');
                             if ($ids) {
                                 $w->whereHas('family', fn ($f) => $f->whereIn('region_id', $ids));
@@ -218,10 +219,10 @@ class MemberResource extends Resource
                 SelectFilter::make('activity_status')->label('Keaktifan')->options(Opsi::KEAKTIFAN),
                 SelectFilter::make('commission')->label('Komisi')
                     ->options(fn () => Commission::orderBy('name')->pluck('name', 'id'))
-                    ->query(fn (Builder $q, array $data) => $data['value']
-                        ? $q->whereHas('commissions', fn ($c) => $c->where('commissions.id', $data['value'])) : $q),
+                    ->query(fn (Builder $query, array $data) => $data['value']
+                        ? $query->whereHas('commissions', fn ($c) => $c->where('commissions.id', $data['value'])) : $query),
                 SelectFilter::make('age_group')->label('Kelompok umur')->options(Opsi::KELOMPOK_UMUR)
-                    ->query(fn (Builder $q, array $data) => $data['value'] ? $q->ageGroup($data['value']) : $q),
+                    ->query(fn (Builder $query, array $data) => $data['value'] ? (new Member)->scopeAgeGroup($query, $data['value']) : $query),
                 SelectFilter::make('family_id')->label('KK')->relationship('family', 'code')->searchable(),
                 SelectFilter::make('kelengkapan')->label('Kelengkapan data (DJ-17)')
                     ->options([
@@ -232,18 +233,18 @@ class MemberResource extends Resource
                         'tanpa_kk' => 'Belum masuk KK',
                         'tanpa_sakramen' => 'Anggota tanpa data baptis/sidi',
                     ])
-                    ->query(fn (Builder $q, array $data) => match ($data['value'] ?? null) {
-                        'tanpa_hp' => $q->whereNull('phone')->whereDoesntHave('family', fn ($f) => $f->whereNotNull('phone')),
-                        'tanpa_tgl_lahir' => $q->whereNull('birth_date'),
-                        'tanpa_kelamin' => $q->whereNull('gender'),
-                        'tanpa_koordinat' => $q->whereHas('family', fn ($f) => $f->whereNull('latitude')),
-                        'tanpa_kk' => $q->whereNull('family_id'),
-                        'tanpa_sakramen' => $q->whereIn('membership_status', Opsi::ANGGOTA_RESMI)
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'tanpa_hp' => $query->whereNull('phone')->whereDoesntHave('family', fn ($f) => $f->whereNotNull('phone')),
+                        'tanpa_tgl_lahir' => $query->whereNull('birth_date'),
+                        'tanpa_kelamin' => $query->whereNull('gender'),
+                        'tanpa_koordinat' => $query->whereHas('family', fn ($f) => $f->whereNull('latitude')),
+                        'tanpa_kk' => $query->whereNull('family_id'),
+                        'tanpa_sakramen' => $query->whereIn('membership_status', Opsi::ANGGOTA_RESMI)
                             ->whereDoesntHave('events', fn ($e) => $e->whereIn('type', ['baptis', 'sidi'])->where('data_status', 'lengkap')),
-                        default => $q,
+                        default => $query,
                     }),
                 Filter::make('tercatat')->label('Sembunyikan yang keluar/meninggal')->default()
-                    ->query(fn (Builder $q) => $q->tercatat())->toggle(),
+                    ->query(fn (Builder $query) => $query->whereIn('membership_status', Opsi::MASIH_TERCATAT))->toggle(),
             ])
             ->filtersFormColumns(2)
             ->recordActions([

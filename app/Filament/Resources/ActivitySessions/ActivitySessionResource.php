@@ -49,12 +49,12 @@ class ActivitySessionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $u = auth()->user();
-        $q = parent::getEloquentQuery()->with('activityType')->withCount('attendances');
+        $query = parent::getEloquentQuery()->with('activityType')->withCount('attendances');
         if ($u->hasRole('koordinator_komisi') && ! $u->lihatSemuaJemaat() && ! $u->peran('sekretariat')) {
-            $q->whereHas('activityType', fn ($t) => $t->whereIn('commission_id', $u->komisiDikoordinasi()));
+            $query->whereHas('activityType', fn ($t) => $t->whereIn('commission_id', $u->komisiDikoordinasi()));
         }
 
-        return $q;
+        return $query;
     }
 
     public static function activityTypeOptions(): array
@@ -63,7 +63,7 @@ class ActivitySessionResource extends Resource
 
         return ActivityType::query()->where('is_active', true)
             ->when($u->hasRole('koordinator_komisi') && ! $u->peran('super_admin', 'sekretariat'),
-                fn ($q) => $q->whereIn('commission_id', $u->komisiDikoordinasi()))
+                fn ($query) => $query->whereIn('commission_id', $u->komisiDikoordinasi()))
             ->orderByDesc('is_general_worship')->orderBy('name')->pluck('name', 'id')->all();
     }
 
@@ -116,7 +116,7 @@ class ActivitySessionResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('activity_type_id')->label('Kegiatan')->relationship('activityType', 'name'),
-                Filter::make('bulan_ini')->label('30 hari terakhir')->query(fn (Builder $q) => $q->where('date', '>=', today()->subDays(30)))->toggle(),
+                Filter::make('bulan_ini')->label('30 hari terakhir')->query(fn (Builder $query) => $query->where('date', '>=', today()->subDays(30)))->toggle(),
             ])
             ->recordActions([
                 Action::make('absen')->label('Absensi')->icon(Heroicon::OutlinedDevicePhoneMobile)->color('success')

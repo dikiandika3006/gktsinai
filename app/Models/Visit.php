@@ -39,7 +39,7 @@ class Visit extends Model
 
     public function team(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'visit_user');
     }
 
     public function report(): HasOne

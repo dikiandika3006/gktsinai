@@ -41,9 +41,9 @@ class CommissionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $u = auth()->user();
-        $q = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery();
 
-        return $u->lihatSemuaJemaat() ? $q : $q->whereIn('id', $u->komisiDikoordinasi());
+        return $u->lihatSemuaJemaat() ? $query : $query->whereIn('id', $u->komisiDikoordinasi());
     }
 
     public static function form(Schema $schema): Schema

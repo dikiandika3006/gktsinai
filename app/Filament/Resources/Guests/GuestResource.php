@@ -57,18 +57,18 @@ class GuestResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $u = auth()->user();
-        $q = parent::getEloquentQuery()->with('pic')->withCount('attendances');
+        $query = parent::getEloquentQuery()->with('pic')->withCount('attendances');
         if ($u->peran('super_admin', 'sekretariat', 'pendeta', 'majelis')) {
-            return $q;
+            return $query;
         }
         if ($u->peran('koordinator_wilayah', 'koordinator_komisi')) {
-            return $q->where('pic_id', $u->id);
+            return $query->where('pic_id', $u->id);
         }
         if ($u->peran('penyambut')) {
-            return $q->whereDate('created_at', today());
+            return $query->whereDate('created_at', today());
         }
 
-        return $q->whereRaw('1 = 0');
+        return $query->whereRaw('1 = 0');
     }
 
     public static function getNavigationBadge(): ?string
@@ -163,8 +163,8 @@ class GuestResource extends Resource
                 SelectFilter::make('fu_stage')->label('Tahap')->options(Opsi::TAHAP_FU)->multiple(),
                 SelectFilter::make('pic_id')->label('PIC')->relationship('pic', 'name'),
                 Filter::make('terlambat')->label('FU lewat batas waktu')->toggle()
-                    ->query(fn (Builder $q) => $q->where('fu_stage', 'baru')->where('fu_due_at', '<', now())),
-                Filter::make('saya')->label('FU saya')->toggle()->query(fn (Builder $q) => $q->where('pic_id', auth()->id())),
+                    ->query(fn (Builder $query) => $query->where('fu_stage', 'baru')->where('fu_due_at', '<', now())),
+                Filter::make('saya')->label('FU saya')->toggle()->query(fn (Builder $query) => $query->where('pic_id', auth()->id())),
             ])
             ->recordActions([
                 ViewAction::make(),

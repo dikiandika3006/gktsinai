@@ -11,7 +11,6 @@ use App\Support\Opsi;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Builder;
 
 /** 4.6 Peta Persebaran Jemaat (PT-01 s.d. PT-06). */
 class PetaJemaat extends Page
@@ -51,7 +50,7 @@ class PetaJemaat extends Page
     {
         $user = auth()->user();
         $perhatianMember = collect(app(AttendanceService::class)->attentionList())->pluck('member.family_id')->filter()->flip();
-        $memberFilter = function (Builder $m) {
+        $memberFilter = function ($m) {
             $m->tercatat()
                 ->when($this->keanggotaan, fn ($q) => $q->where('membership_status', $this->keanggotaan))
                 ->when($this->keaktifan, fn ($q) => $q->where('activity_status', $this->keaktifan))
