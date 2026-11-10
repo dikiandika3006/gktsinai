@@ -57,6 +57,20 @@ class SmokeTest extends TestCase
         }
     }
 
+    public function test_login_with_username_or_email(): void
+    {
+        \Livewire\Livewire::test(\App\Filament\Pages\Auth\Login::class)
+            ->fillForm(['username' => 'admin@gktsinai.test', 'password' => 'password'])->call('authenticate')
+            ->assertHasNoFormErrors();
+        $this->assertAuthenticated();
+
+        auth()->logout();
+        \Livewire\Livewire::test(\App\Filament\Pages\Auth\Login::class)
+            ->fillForm(['username' => 'Admin', 'password' => 'password'])->call('authenticate')
+            ->assertHasNoFormErrors();
+        $this->assertAuthenticated();
+    }
+
     public function test_maintenance_page_super_admin_only(): void
     {
         $this->actingAs($this->user('admin@gktsinai.test'));
