@@ -1,9 +1,9 @@
 @extends('layouts.mobile')
 @section('title', 'Form Tamu')
 @section('heading', 'Selamat datang!')
-@section('subheading', $session ? $session->activityType?->name.' · '.$session->date->format('d/m/Y') : config('sij.church_name'))
+@section('subheading', $session ? $session->activityType?->name.($session->kebaktian ? ' '.$session->kebaktian : '').' · '.$session->date->format('d/m/Y') : config('sij.church_name'))
 @auth
-    @section('back', route('absen.index'))
+    @section('back', $session ? route('absen.session', $session) : route('absen.index'))
 @endauth
 @section('content')
     <p class="mb-4 text-slate-600">Terima kasih sudah beribadah bersama kami. Mohon isi data singkat berikut.</p>

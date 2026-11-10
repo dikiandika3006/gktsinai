@@ -22,12 +22,14 @@ class AttendanceService
         $hasil = collect();
 
         // Ibadah Umum
-        $sesiUmum = ActivitySession::query()
-            ->whereHas('activityType', fn ($q) => $q->where('is_general_worship', true))
-            ->where('date', '<=', today())
-            ->orderByDesc('date')->limit($n)->pluck('id');
+        // Satu Minggu bisa punya beberapa kebaktian (KU I, KU II): hitung per tanggal.
+        $umum = ActivitySession::query()->whereHas('activityType', fn ($q) => $q->where('is_general_worship', true));
+        $tanggal = (clone $umum)->where('date', '<=', today())
+            ->select('date')->distinct()->orderByDesc('date')->limit($n)->pluck('date');
+        $sesiUmum = $tanggal->isEmpty() ? collect()
+            : (clone $umum)->where('date', '<=', today())->whereDate('date', '>=', $tanggal->last())->pluck('id');
 
-        if ($sesiUmum->count() >= $n) {
+        if ($tanggal->count() >= $n) {
             $hadir = Attendance::whereIn('activity_session_id', $sesiUmum)->whereNotNull('member_id')->pluck('member_id')->unique();
             Member::aktif()->whereNotIn('id', $hadir)->with('family.region')->get()
                 ->each(fn (Member $m) => $hasil->put($m->id, [

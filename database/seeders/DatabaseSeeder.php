@@ -44,8 +44,8 @@ class DatabaseSeeder extends Seeder
         }
 
         $admin = User::firstOrCreate(
-            ['email' => env('SIJ_ADMIN_EMAIL', 'admin@gktsinai.test')],
-            ['name' => 'Super Admin', 'password' => env('SIJ_ADMIN_PASSWORD', 'password')]
+            ['username' => env('SIJ_ADMIN_USERNAME', 'admin')],
+            ['name' => 'Super Admin', 'email' => env('SIJ_ADMIN_EMAIL', 'admin@gktsinai.test'), 'password' => env('SIJ_ADMIN_PASSWORD', 'password')]
         );
         $admin->assignRole('super_admin');
     }

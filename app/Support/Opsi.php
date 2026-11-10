@@ -111,6 +111,7 @@ class Opsi
         'koordinator_komisi' => 'Koordinator Komisi',
         'tim_visitasi' => 'Tim Visitasi',
         'penyambut' => 'Petugas Penyambut',
+        'petugas_absensi' => 'Petugas Absensi',
     ];
 
     public static function label(array $opsi, ?string $key): ?string

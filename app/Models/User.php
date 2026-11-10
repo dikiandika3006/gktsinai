@@ -95,7 +95,15 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function kelolaKehadiran(): bool
     {
-        return $this->peran('super_admin', 'sekretariat', 'koordinator_wilayah', 'koordinator_komisi', 'penyambut');
+        return $this->peran('super_admin', 'sekretariat', 'koordinator_wilayah', 'koordinator_komisi', 'penyambut', 'petugas_absensi');
+    }
+
+    /** Hanya berperan Petugas Absensi: cukup layar absensi, tanpa panel admin. */
+    public function hanyaAbsensi(): bool
+    {
+        $peran = $this->getRoleNames();
+
+        return $peran->count() === 1 && $peran->first() === 'petugas_absensi';
     }
 
     public function kelolaTamu(): bool

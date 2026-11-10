@@ -23,11 +23,13 @@ Route::post('/c/{token}', [SelfCheckinController::class, 'store'])->middleware('
 Route::middleware('auth')->group(function () {
     // KH-03: absensi oleh petugas (PWA)
     Route::get('/absen', [AbsenController::class, 'index'])->name('absen.index');
+    Route::post('/absen/keluar', [AbsenController::class, 'logout'])->name('absen.logout');
     Route::post('/absen/buka', [AbsenController::class, 'open'])->name('absen.open');
     Route::get('/absen/{session}', [AbsenController::class, 'show'])->name('absen.session');
     Route::get('/absen/{session}/data', [AbsenController::class, 'data'])->name('absen.data');
     Route::post('/absen/{session}/sync', [AbsenController::class, 'sync'])->name('absen.sync');
     Route::post('/absen/{session}/jumlah', [AbsenController::class, 'count'])->name('absen.count');
+    Route::delete('/absen/{session}/tamu/{attendance}', [AbsenController::class, 'removeGuest'])->name('absen.remove-guest');
 
     Route::get('/sesi/{session}/qr', [AbsenController::class, 'qr'])->name('sessions.qr');
 

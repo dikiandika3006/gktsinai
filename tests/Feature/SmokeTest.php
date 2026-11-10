@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\ActivitySession;
 use App\Models\ActivityType;
+use App\Models\Attendance;
+use App\Models\Commission;
 use App\Models\Family;
 use App\Models\Guest;
 use App\Models\Member;
@@ -41,7 +43,7 @@ class SmokeTest extends TestCase
         $urls = [
             '/admin', '/admin/members', '/admin/members/create', "/admin/members/{$m->id}", "/admin/members/{$m->id}/edit",
             '/admin/families', '/admin/families/create', "/admin/families/{$f->id}", "/admin/families/{$f->id}/edit",
-            '/admin/regions', '/admin/regions/create', '/admin/commissions', '/admin/commissions/'.\App\Models\Commission::first()->id.'/edit', '/admin/activity-types',
+            '/admin/regions', '/admin/regions/create', '/admin/commissions', '/admin/commissions/'.Commission::first()->id.'/edit', '/admin/activity-types',
             '/admin/activity-sessions', "/admin/activity-sessions/{$s->id}", '/admin/activity-sessions/create',
             '/admin/guests', "/admin/guests/{$g->id}", '/admin/visits', "/admin/visits/{$v->id}",
             '/admin/growth-targets', '/admin/pertumbuhan', '/admin/laporan-kehadiran', '/admin/daftar-perhatian',
@@ -111,11 +113,18 @@ class SmokeTest extends TestCase
     {
         $this->actingAs($this->user('penyambut@gktsinai.test'));
         // Pilih tanggal + ibadah: sesi dibuat otomatis sekali saja.
-        $type = \App\Models\ActivityType::where('is_general_worship', true)->value('id');
+        $type = ActivityType::where('is_general_worship', true)->value('id');
         $open = $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-06'])->assertOk()->json();
         $this->assertSame($open['id'], $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-06'])->json('id'));
         $this->getJson($open['data_url'])->assertOk()->assertJsonStructure(['members' => [['id', 'n', 'fh']], 'present']);
         $s = ActivitySession::find($open['id']);
+
+        // Tamu salah catat bisa dihapus dari sesi.
+        $tamu = Guest::create(['name' => 'Salah Catat']);
+        $att = Attendance::create(['activity_session_id' => $s->id, 'guest_id' => $tamu->id, 'checked_in_at' => now()]);
+        $this->getJson($open['data_url'])->assertJsonFragment(['id' => $att->id, 'name' => 'Salah Catat']);
+        $this->deleteJson(str_replace('/0', '/'.$att->id, $open['guest_remove_url']))->assertOk()->assertJson(['guest_deleted' => true]);
+        $this->assertDatabaseMissing('guests', ['id' => $tamu->id]);
         $ids = Member::aktif()->limit(3)->pluck('id');
         $this->postJson("/absen/{$s->id}/sync", ['items' => $ids->map(fn ($id) => ['member_id' => $id, 'at' => now()->toIso8601String()])->all()])
             ->assertOk()->assertJson(['ok' => true]);
@@ -126,5 +135,36 @@ class SmokeTest extends TestCase
         $new = Member::create(['name' => 'BUDI SANTOSO', 'membership_status' => 'simpatisan']);
         $this->assertSame('SIB'.str_pad((string) ((int) substr($last, 3) + 1), 4, '0', STR_PAD_LEFT), $new->code);
         $this->assertDatabaseHas('audit_logs', ['auditable_id' => $new->id, 'event' => 'dibuat']);
+    }
+
+    public function test_petugas_absensi_only_sees_attendance_screen(): void
+    {
+        $this->actingAs($this->user('absensi@gktsinai.test'));
+        $this->get('/admin')->assertRedirect('/absen');
+        $this->get('/admin/members')->assertRedirect('/absen');
+        $this->get('/absen')->assertOk()->assertSee('absen-root', false)->assertDontSee('/admin"', false);
+
+        // KU I, KU II, dan Gabungan pada tanggal yang sama adalah sesi terpisah; tanggal bebas dipilih.
+        $type = ActivityType::where('is_general_worship', true)->value('id');
+        $ku1 = $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-13', 'kebaktian' => 'KU I'])->assertOk()->json('id');
+        $ku2 = $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-13', 'kebaktian' => 'KU II'])->assertOk()->json('id');
+        $this->assertNotSame($ku1, $ku2);
+        $this->assertSame($ku1, $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-13', 'kebaktian' => 'KU I'])->json('id'));
+        $this->assertSame('KU II', ActivitySession::find($ku2)->kebaktian);
+        $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-13', 'kebaktian' => 'KU X'])->assertUnprocessable();
+
+        // Daftar hadir KU II ikut menampilkan KU I; jemaat yang sudah hadir di KU I tidak diabsen lagi di KU II.
+        [$a, $b] = Member::where('membership_status', '!=', 'meninggal')->take(2)->pluck('id')->all();
+        $this->postJson("/absen/{$ku1}/sync", ['items' => [['member_id' => $a]]])->assertOk();
+        $this->postJson("/absen/{$ku2}/sync", ['items' => [['member_id' => $a], ['member_id' => $b]]])->assertOk();
+        $this->assertSame([$b], ActivitySession::find($ku2)->attendances()->pluck('member_id')->all());
+        $others = $this->getJson("/absen/{$ku2}/data")->assertOk()->json('others');
+        $this->assertSame('KU I', $others[0]['kebaktian']);
+        $this->assertArrayHasKey($a, $others[0]['present']);
+        $tanpaKebaktian = $this->postJson('/absen/buka', ['activity_type_id' => $type, 'date' => '2026-12-20'])->json('id');
+        $this->assertSame([], $this->getJson("/absen/{$tanpaKebaktian}/data")->json('others'));
+
+        $this->post('/absen/keluar')->assertRedirect(route('filament.admin.auth.login'));
+        $this->assertGuest();
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Auth\MultiFactor\App\AppAuthentication;
+use App\Filament\Pages\Auth\Login;
+use App\Http\Middleware\HanyaAbsensi;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
             ->profile()
             ->brandName('Sistem Informasi Jemaat')
             ->brandLogo(fn () => view('filament.brand'))
@@ -39,10 +40,6 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Indigo,
             ])
-            ->multiFactorAuthentication(
-                [AppAuthentication::make()->recoverable()->brandName('Sistem Informasi Jemaat GKT Sinai Batu')],
-                isRequired: fn () => (bool) auth()->user()?->hasAnyRole(['super_admin', 'pendeta']),
-            )
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.leaflet-assets'))
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('filament.menu-search'))
             ->databaseNotifications()
@@ -83,6 +80,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                HanyaAbsensi::class,
             ]);
     }
 }

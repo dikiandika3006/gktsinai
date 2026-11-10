@@ -59,11 +59,13 @@ class GuestFormController extends Controller
             Notification::send($penerima, new NewGuestNotification($guest));
         }
 
-        return redirect()->route('tamu.thanks', ['nama' => $guest->name, 'lagi' => $baru ? null : 1]);
+        return redirect()->route('tamu.thanks', ['nama' => $guest->name, 'lagi' => $baru ? null : 1, 'sesi' => $session?->qr_token]);
     }
 
     public function thanks(Request $request)
     {
-        return view('tamu.thanks', ['nama' => $request->query('nama'), 'lagi' => $request->boolean('lagi')]);
+        $session = $request->query('sesi') ? ActivitySession::where('qr_token', $request->query('sesi'))->first() : null;
+
+        return view('tamu.thanks', ['nama' => $request->query('nama'), 'lagi' => $request->boolean('lagi'), 'session' => $session]);
     }
 }

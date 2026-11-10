@@ -90,6 +90,8 @@ class Tentang
         [
             'tanggal' => '10 November 2026',
             'perubahan' => [
+                'Absensi (PWA): Ibadah Umum dipilih per kebaktian (KU I / KU II / Gabungan). Daftar Hadir menampilkan semua kebaktian hari itu per bagian yang bisa dibuka-tutup; jemaat yang sudah hadir di satu kebaktian cukup diabsen sekali dan dihitung sekali.',
+                'Perbaikan error "Attempt to read property alias on null" saat edit anggota di halaman KK.',
                 'Data jemaat diperbarui dari sheet "Data Jemaat Komprehensif" (385 orang, 129 KK); SIB0337 digabung ke SIB0121 sesuai catatan Excel; kolom Catatan ikut diimpor.',
                 'Import Excel hanya membaca sheet yang dipilih dan memakai nilai tersimpan dari kolom rumus, sehingga file dengan banyak sheet tidak lagi kehabisan memori.',
                 'Data jemaat asli diimpor dari "Data Jemaat Lengkap.xlsx", menggantikan data contoh.',

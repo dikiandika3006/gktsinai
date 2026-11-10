@@ -35,7 +35,7 @@ class ActivitySession extends Model
 
     public function getTitleAttribute(): string
     {
-        return ($this->activityType?->name ?? 'Kegiatan').' - '.$this->date?->format('d/m/Y')
+        return ($this->activityType?->name ?? 'Kegiatan').($this->kebaktian ? ' '.$this->kebaktian : '').' - '.$this->date?->format('d/m/Y')
             .($this->start_time ? ' '.substr($this->start_time, 0, 5) : '');
     }
 

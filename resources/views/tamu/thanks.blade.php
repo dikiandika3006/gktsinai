@@ -7,8 +7,9 @@
         <p class="mt-4 text-xl font-bold">{{ $lagi ? 'Senang bertemu kembali' : 'Selamat datang' }}{{ $nama ? ', '.$nama : '' }}!</p>
         <p class="mt-1 text-slate-600">Data Anda sudah kami terima. Tuhan Yesus memberkati.</p>
         @auth
-            <a href="{{ route('tamu.create') }}" class="btn btn-primary mt-6 w-full">Catat tamu lain</a>
-            <a href="{{ route('absen.index') }}" class="btn btn-light mt-2 w-full">Kembali ke absensi</a>
+            {{-- Tetap di sesi yang sama (mis. KU II tanggal 15), bukan kembali ke hari ini. --}}
+            <a href="{{ route('tamu.create', array_filter(['sesi' => $session?->qr_token])) }}" class="btn btn-primary mt-6 w-full">Catat tamu lain</a>
+            <a href="{{ $session ? route('absen.session', $session) : route('absen.index') }}" class="btn btn-light mt-2 w-full">Kembali ke absensi</a>
         @endauth
     </div>
 @endsection

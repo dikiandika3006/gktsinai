@@ -5,6 +5,7 @@
 @source '../views/tamu/**/*.blade.php';
 @source '../views/layouts/**/*.blade.php';
 @source '../js/**/*.js';
+@source '../js/**/*.jsx';
 
 @theme {
     --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

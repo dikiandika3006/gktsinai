@@ -73,6 +73,9 @@ class ActivitySessionResource extends Resource
             Section::make()->columns(3)->schema([
                 Select::make('activity_type_id')->label('Jenis kegiatan')->options(fn () => self::activityTypeOptions())
                     ->required()->live(),
+                Select::make('kebaktian')->label('Kebaktian')
+                    ->options(fn () => array_combine($k = array_keys(config('sij.kebaktian')), $k))
+                    ->visible(fn (Get $get) => (bool) ActivityType::find($get('activity_type_id'))?->is_general_worship),
                 DatePicker::make('date')->label('Tanggal')->default(today())->required(),
                 TextInput::make('location')->label('Tempat')->default('Gedung Gereja'),
                 TimePicker::make('start_time')->label('Jam mulai')->seconds(false)->default('07:00'),
@@ -89,7 +92,8 @@ class ActivitySessionResource extends Resource
     {
         return $schema->components([
             Section::make()->columns(4)->schema([
-                TextEntry::make('activityType.name')->label('Kegiatan'),
+                TextEntry::make('activityType.name')->label('Kegiatan')
+                    ->suffix(fn (ActivitySession $r) => $r->kebaktian ? ' '.$r->kebaktian : ''),
                 TextEntry::make('date')->label('Tanggal')->date('d/m/Y'),
                 TextEntry::make('jam')->label('Jam')->state(fn (ActivitySession $r) => substr((string) $r->start_time, 0, 5).' - '.substr((string) $r->end_time, 0, 5)),
                 TextEntry::make('location')->label('Tempat'),
@@ -109,7 +113,8 @@ class ActivitySessionResource extends Resource
             ->columns([
                 TextColumn::make('date')->label('Tanggal')->date('d/m/Y')->sortable(),
                 TextColumn::make('start_time')->label('Jam')->formatStateUsing(fn ($state) => substr((string) $state, 0, 5)),
-                TextColumn::make('activityType.name')->label('Kegiatan')->searchable(),
+                TextColumn::make('activityType.name')->label('Kegiatan')->searchable()
+                    ->description(fn (ActivitySession $r) => $r->kebaktian),
                 TextColumn::make('location')->label('Tempat')->toggleable(),
                 TextColumn::make('hadir')->label('Hadir')
                     ->state(fn (ActivitySession $r) => $r->manual_count ?? $r->attendances_count),

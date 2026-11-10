@@ -36,9 +36,10 @@ class DemoSeeder extends Seeder
             ['Majelis Contoh', 'majelis@gktsinai.test', 'majelis'],
             ['Tim Visitasi 1', 'visitasi@gktsinai.test', 'tim_visitasi'],
             ['Penyambut 1', 'penyambut@gktsinai.test', 'penyambut'],
+            ['Petugas Absensi 1', 'absensi@gktsinai.test', 'petugas_absensi'],
         ];
         foreach ($staff as [$n, $e, $r]) {
-            User::firstOrCreate(['email' => $e], ['name' => $n, 'password' => 'password'])->assignRole($r);
+            User::firstOrCreate(['email' => $e], ['name' => $n, 'username' => strstr($e, '@', true), 'password' => 'password'])->assignRole($r);
         }
 
         $center = config('sij.map_center');

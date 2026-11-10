@@ -16,6 +16,13 @@ return [
     // Titik tengah peta (Kota Batu).
     'map_center' => [-7.8710, 112.5260],
 
+    // Pilihan kebaktian untuk Ibadah Umum di layar absensi (jam dipakai saat sesi dibuat otomatis).
+    'kebaktian' => [
+        'KU I' => ['06:30', '08:30'],
+        'KU II' => ['09:00', '11:00'],
+        'Gabungan' => ['08:00', '10:00'],
+    ],
+
     // TF-03: batas waktu follow-up tamu (jam).
     'fu_deadline_hours' => 48,
 

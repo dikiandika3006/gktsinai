@@ -37,14 +37,18 @@ class UserResource extends Resource
         return $schema->components([
             Section::make()->columns(2)->schema([
                 TextInput::make('name')->label('Nama')->required(),
-                TextInput::make('email')->email()->required()->unique(ignoreRecord: true),
+                TextInput::make('username')->label('Username')->required()->maxLength(50)
+                    ->regex('/^[a-z0-9._-]+$/')->unique(ignoreRecord: true)
+                    ->helperText('Huruf kecil, angka, titik, strip. Dipakai untuk login.')
+                    ->dehydrateStateUsing(fn ($state) => mb_strtolower(trim((string) $state))),
+                TextInput::make('email')->email()->unique(ignoreRecord: true)->helperText('Opsional.'),
                 TextInput::make('phone')->label('No. HP')->tel(),
                 TextInput::make('password')->password()->revealable()
                     ->required(fn (string $operation) => $operation === 'create')
                     ->dehydrated(fn ($state) => filled($state))->minLength(8)
                     ->helperText('Kosongkan bila tidak diubah.'),
                 Select::make('roles')->label('Peran')->multiple()->relationship('roles', 'name')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => Opsi::PERAN[$r->name] ?? $r->name)->preload()->required(),
+                    ->getOptionLabelFromRecordUsing(fn ($record) => Opsi::PERAN[$record->name] ?? $record->name)->preload()->required(),
                 Select::make('region_id')->label('Wilayah (koordinator wilayah)')->relationship('region', 'name'),
                 Select::make('commission_id')->label('Komisi (koordinator komisi)')->relationship('commission', 'name'),
                 Toggle::make('is_active')->label('Aktif')->default(true)->inline(false),
@@ -57,12 +61,11 @@ class UserResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')->label('Nama')->searchable(),
-                TextColumn::make('email')->searchable(),
+                TextColumn::make('username')->label('Username')->searchable(),
+                TextColumn::make('email')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('roles.name')->label('Peran')->badge()->formatStateUsing(fn ($state) => Opsi::PERAN[$state] ?? $state),
                 TextColumn::make('region.name')->label('Wilayah'),
                 TextColumn::make('commission.name')->label('Komisi'),
-                IconColumn::make('app_authentication_secret')->label('2FA')->boolean()
-                    ->state(fn (User $u) => filled($u->app_authentication_secret)),
                 IconColumn::make('is_active')->label('Aktif')->boolean(),
             ])
             ->recordActions([EditAction::make()]);

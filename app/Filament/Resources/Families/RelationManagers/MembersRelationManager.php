@@ -51,7 +51,7 @@ class MembersRelationManager extends RelationManager
             ->defaultSort('birth_date')
             ->columns([
                 TextColumn::make('code')->label('Kode'),
-                TextColumn::make('name')->label('Nama')->description(fn ($r) => $r->alias),
+                TextColumn::make('name')->label('Nama')->description(fn ($record) => $record?->alias),
                 TextColumn::make('family_relation')->label('Hubungan')->formatStateUsing(fn ($state) => Opsi::label(Opsi::HUBUNGAN, $state)),
                 TextColumn::make('gender')->label('L/P'),
                 TextColumn::make('age')->label('Umur'),
