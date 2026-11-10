@@ -30,15 +30,30 @@
     </style>
 
     @php
-        $orang = function ($unit) {
-            return $unit->positions->map(function ($p) {
-                $nama = e($p->display_name);
-                $nama = $p->member_id ? $nama : "<u class='belum' title='Belum dihubungkan ke data jemaat'>{$nama}</u>";
-                $ket = $p->note ? ' <i>('.e($p->note).')</i>' : '';
-                $role = in_array($p->role, ['penatua_pj', 'majelis_pendamping', 'penatua'], true) ? '' : '<i>'.e($p->role_label).':</i> ';
+        // Pengurus per unit; anggota digabung satu baris. $singkat (kotak komisi): MP = Majelis Pendamping, HT = Hamba Tuhan.
+        $orang = function ($unit, bool $singkat = false) {
+            $nama = function ($p) {
+                $n = e($p->display_name);
+                $n = $p->member_id ? $n : "<u class='belum' title='Belum dihubungkan ke data jemaat'>{$n}</u>";
 
-                return "<span>{$role}{$nama}{$ket}</span>";
-            })->join('');
+                return $n.($p->note ? ' <i>('.e($p->note).')</i>' : '');
+            };
+            $baris = $unit->positions->where('role', '!=', 'anggota')->map(function ($p) use ($nama, $singkat) {
+                $label = match (true) {
+                    $singkat && $p->role === 'majelis_pendamping' => 'MP',
+                    $singkat && $p->role === 'hamba_tuhan' => 'HT',
+                    ! $singkat && in_array($p->role, ['penatua_pj', 'majelis_pendamping', 'penatua'], true) => null,
+                    default => $p->role_label,
+                };
+
+                return '<span>'.($label ? '<i>'.e($label).':</i> ' : '').$nama($p).'</span>';
+            });
+            $anggota = $unit->positions->where('role', 'anggota');
+            if ($anggota->isNotEmpty()) {
+                $baris->push('<span style="margin-top:.2rem"><i>Anggota:</i> '.$anggota->map($nama)->join(', ').'</span>');
+            }
+
+            return $baris->join('');
         };
     @endphp
 
@@ -119,10 +134,7 @@
                                 <div class="kotak">
                                     <div class="nama">{{ $k->name }}</div>
                                     <div class="org-orang">
-                                        @foreach ($k->positions as $p)
-                                            <span><i>{{ $p->role === 'majelis_pendamping' ? 'MP' : ($p->role === 'hamba_tuhan' ? 'HT' : $p->role_label) }}:</i>
-                                                @if ($p->member_id) {{ $p->display_name }} @else <u class="belum" title="Belum dihubungkan ke data jemaat">{{ $p->display_name }}</u> @endif</span>
-                                        @endforeach
+                                        {!! $orang($k, true) !!}
                                     </div>
                                 </div>
                             @endforeach
