@@ -1,6 +1,7 @@
 <x-filament-widgets::widget>
-    <div class="sinai-banner" style="--sinai-logo: url('{{ asset('logo-gkt.png') }}')">
-        <div style="position:relative">
+    <div class="sinai-banner">
+        <div class="sinai-logo"><img src="{{ asset('logo-gkt.png') }}" alt="Logo GKT Sinai Batu"></div>
+        <div class="sinai-banner-isi">
             <div style="font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;opacity:.8;font-weight:600">{{ $tanggal }}</div>
             <h2 style="margin-top:.2rem">{{ $salam }}, {{ $nama }} 👋</h2>
             <div class="sinai-sub">Tuhan memberkati pelayanan kita hari ini.</div>

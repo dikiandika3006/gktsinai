@@ -154,17 +154,50 @@
     box-shadow: 0 14px 30px -18px rgb(20 83 45 / .7);
 }
 
-.sinai-banner::before {
-    content: '';
+/* Logo gereja ditonjolkan dalam lingkaran putih di sisi kanan banner */
+.sinai-logo {
     position: absolute;
-    right: 1.5rem;
-    bottom: -1.5rem;
-    width: 9rem;
-    height: 9rem;
-    background: var(--sinai-logo) center / contain no-repeat; /* diisi dari blade (asset URL) */
-    mix-blend-mode: multiply; /* latar putih logo menyatu dengan banner */
-    opacity: .35;
-    pointer-events: none;
+    right: 1.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8.5rem;
+    height: 8.5rem;
+    border-radius: 999px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 6px rgb(255 255 255 / .18), 0 0 0 14px rgb(217 154 30 / .22), 0 18px 34px -12px rgb(0 0 0 / .45);
+}
+
+.sinai-logo img {
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+}
+
+.sinai-banner-isi {
+    position: relative;
+    padding-right: 11rem;
+}
+
+@media (max-width: 768px) {
+    .sinai-logo {
+        width: 4.5rem;
+        height: 4.5rem;
+        top: 1.25rem;
+        right: 1.25rem;
+        transform: none;
+        box-shadow: 0 0 0 4px rgb(255 255 255 / .18), 0 10px 20px -10px rgb(0 0 0 / .45);
+    }
+
+    .sinai-banner-isi {
+        padding-right: 0;
+    }
+
+    .sinai-banner-isi h2 {
+        padding-right: 5rem;
+    }
 }
 
 .sinai-banner h2 {
