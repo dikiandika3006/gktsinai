@@ -23,6 +23,9 @@ return [
         'Gabungan' => ['08:00', '10:00'],
     ],
 
+    // Jadwal pelayanan: peringatan bila satu orang bertugas lebih dari N Minggu dalam sebulan.
+    'batas_tugas_per_bulan' => (int) env('SIJ_BATAS_TUGAS_PER_BULAN', 3),
+
     // TF-03: batas waktu follow-up tamu (jam).
     'fu_deadline_hours' => 48,
 

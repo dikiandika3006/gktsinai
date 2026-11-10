@@ -51,7 +51,12 @@ class LaporanKehadiran extends Page
 
     protected function getHeaderWidgets(): array
     {
-        return [AttendanceTrendChart::class];
+        return [AttendanceTrendChart::class, \App\Filament\Widgets\HadirBaruKembali::class];
+    }
+
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return ['md' => 2];
     }
 
     protected function sesiQuery()

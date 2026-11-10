@@ -91,6 +91,13 @@ class Tentang
         [
             'tanggal' => '10 November 2026',
             'perubahan' => [
+                'Menu ditata ulang: Jemaat, Ibadah & Kehadiran, Pelayanan, Pastoral, Laporan, Pengaturan; alamat halaman berbahasa Indonesia (mis. /admin/jemaat, /admin/kk, /admin/kunjungan).',
+                'Profil jemaat: tab Visitasi, Kehadiran (persentase hadir 3 bulan, terakhir hadir), dan Pelayanan (riwayat & tugas berikutnya).',
+                'Visitasi: pendamping bisa dipilih dari data jemaat; laporan mencentang anggota KK yang hadir.',
+                'Dashboard per peran: Pelayanan Minggu ini, Kunjungan saya, Wilayah saya, Komisi saya, Cakupan visitasi per wilayah, Hadir pertama kali & kembali hadir.',
+                'Grafik kehadiran per kebaktian (KU I / KU II / Gabungan) dengan total harian (jemaat dihitung sekali).',
+                'Jadwal Bulanan memberi peringatan bila seseorang bertugas dobel atau lebih dari 3 Minggu sebulan.',
+                'Pemeliharaan dibagi per tab: Database, Data Jemaat, Peta, Paket Data.',
                 'Pin alamat KK (OpenStreetMap): dicari bertahap (alamat dibersihkan → nama jalan → wilayah); tombol "Google Maps" di KK, daftar KK, dan popup Peta Jemaat; tombol "Proses pin alamat" di Pemeliharaan (tanpa SSH).',
                 'Absensi (PWA): Ibadah Umum dipilih per kebaktian (KU I / KU II / Gabungan). Daftar Hadir menampilkan semua kebaktian hari itu per bagian yang bisa dibuka-tutup; jemaat yang sudah hadir di satu kebaktian cukup diabsen sekali dan dihitung sekali.',
                 'Perbaikan error "Attempt to read property alias on null" saat edit anggota di halaman KK.',

@@ -16,7 +16,18 @@
         @if ($jadwal->isEmpty())
             <p style="opacity:.7">Belum ada jadwal di bulan ini.</p>
         @else
-            @include('filament.jadwal.grid', ['jadwal' => $jadwal])
+            @if ($peringatan)
+                <div style="margin-bottom:.9rem;padding:.7rem .9rem;border-radius:.5rem;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.35);font-size:.85rem">
+                    <b style="color:#b45309">Perlu dicek ({{ count($peringatan) }})</b>
+                    <ul style="margin:.35rem 0 0 1.1rem;list-style:disc">
+                        @foreach ($peringatan as $p)
+                            <li>{{ $p['jenis'] === 'dobel' ? '⚠ Dobel —' : '⏱ Terlalu sering —' }} {{ $p['teks'] }}</li>
+                        @endforeach
+                    </ul>
+                    <p style="opacity:.7;margin-top:.35rem">Nama yang perlu dicek ditandai ⚠ di tabel. "Terlalu sering" = lebih dari {{ $batasTugas }} Minggu sebulan (pekerja/hamba Tuhan tidak dihitung).</p>
+                </div>
+            @endif
+            @include('filament.jadwal.grid', ['jadwal' => $jadwal, 'tandai' => $tandai])
             <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem;font-size:.8rem">
                 @foreach ($jadwal as $j)
                     <a href="{{ \App\Filament\Resources\WorshipSchedules\WorshipScheduleResource::getUrl($bisaKelola ? 'edit' : 'view', ['record' => $j]) }}"

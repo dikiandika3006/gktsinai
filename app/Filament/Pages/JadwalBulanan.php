@@ -53,12 +53,17 @@ class JadwalBulanan extends Page
     protected function getViewData(): array
     {
         $awal = $this->awal();
+        $jadwal = WorshipSchedule::with(['assignments.member', 'assignments.alias'])
+            ->whereBetween('date', [$awal->toDateString(), $awal->copy()->endOfMonth()->toDateString()])
+            ->orderBy('date')->get();
+        $cek = app(\App\Services\PemeriksaJadwal::class)->periksa($jadwal);
 
         return [
             'judul' => $awal->translatedFormat('F Y'),
-            'jadwal' => WorshipSchedule::with(['assignments.member', 'assignments.alias'])
-                ->whereBetween('date', [$awal->toDateString(), $awal->copy()->endOfMonth()->toDateString()])
-                ->orderBy('date')->get(),
+            'jadwal' => $jadwal,
+            'peringatan' => $cek['peringatan'],
+            'tandai' => $cek['tandai'],
+            'batasTugas' => (int) config('sij.batas_tugas_per_bulan', 3),
             'bisaKelola' => auth()->user()->kelolaJadwal(),
             'urlBaru' => WorshipScheduleResource::getUrl('create'),
             'urlDaftar' => WorshipScheduleResource::getUrl('index'),

@@ -7,10 +7,11 @@
     $warna = ['success' => '#16a34a', 'warning' => '#d97706', 'danger' => '#dc2626', 'gray' => '#6b7280'];
     $info = ['tema' => 'Tema', 'ayat_referensi' => 'Ayat Referensi', 'introitus' => 'Introitus', 'phb' => 'PHB'];
     $peranDipakai = collect(Opsi::PERAN_PELAYANAN)->filter(fn ($l, $p) => $p === "pembicara" || $jadwal->contains(fn ($j) => $j->assignments->contains('peran', $p)));
-    $chip = function ($a) use ($warna) {
+    $tandai ??= [];
+    $chip = function ($a) use ($warna, $tandai) {
         $label = ServantAlias::statusLabel($a->member, $a->alias?->category);
         $c = $warna[ServantAlias::statusColor($a->member, $a->alias?->category)];
-        $nama = e($a->nama);
+        $nama = e($a->nama).(isset($tandai[\App\Services\PemeriksaJadwal::identitas($a)]) ? " <span title='Perlu dicek: dobel / terlalu sering' style='color:#d97706'>⚠</span>" : '');
         $isi = "<span title='".e($label.($a->member ? ' · '.$a->member->name : ''))."' style='display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap'><span style='width:.55rem;height:.55rem;border-radius:50%;background:{$c};flex:none'></span>{$nama}</span>";
         if ($a->member && auth()->user()->can('view', $a->member)) {
             $isi = "<a href='".\App\Filament\Resources\Members\MemberResource::getUrl('view', ['record' => $a->member])."' style='text-decoration:none'>{$isi}</a>";
