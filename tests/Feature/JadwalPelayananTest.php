@@ -124,7 +124,8 @@ class JadwalPelayananTest extends TestCase
 
         $this->actingAs(User::where('email', 'sekretariat@gktsinai.test')->firstOrFail());
         foreach (['/admin/jadwal-bulanan?bulan=2026-11', '/admin/worship-schedules', '/admin/worship-schedules/create',
-            "/admin/worship-schedules/{$s->id}", "/admin/worship-schedules/{$s->id}/edit", '/admin/beban-pelayanan', '/admin/servant-aliases'] as $u) {
+            "/admin/worship-schedules/{$s->id}", "/admin/worship-schedules/{$s->id}/edit", '/admin/beban-pelayanan', '/admin/servant-aliases',
+            '/admin/kaleidoskop-pelayanan'] as $u) {
             $res = $this->get($u);
             $this->assertSame(200, $res->status(), "GET {$u} -> {$res->status()} ".($res->exception?->getMessage() ?? ''));
         }
