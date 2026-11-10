@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@source '../views/absen/**/*.blade.php';
+@source '../views/checkin/**/*.blade.php';
+@source '../views/tamu/**/*.blade.php';
+@source '../views/layouts/**/*.blade.php';
+@source '../js/**/*.js';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tombol besar untuk petugas & lansia */
+.btn { @apply inline-flex items-center justify-center rounded-xl px-5 py-3.5 text-base font-semibold transition active:scale-[.98] disabled:opacity-50; }
+.btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700; }
+.btn-light { @apply bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50; }
+.input { @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-lg text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200; }
+.label { @apply mb-1 block text-sm font-medium text-slate-700; }
