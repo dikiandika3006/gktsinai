@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Support\HakAkses;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Support\Facades\FilamentIcon;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsIconAlias;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -24,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Carbon::setLocale('id');
+
+        // Tombol ciutkan/lebarkan sidebar memakai ikon hamburger (bukan panah).
+        FilamentIcon::register(array_fill_keys([
+            PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON, PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON_RTL,
+            PanelsIconAlias::SIDEBAR_EXPAND_BUTTON, PanelsIconAlias::SIDEBAR_EXPAND_BUTTON_RTL,
+        ], Heroicon::OutlinedBars3));
 
         // HTTPS wajib di produksi.
         if ($this->app->isProduction()) {

@@ -14,6 +14,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -33,6 +34,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(Login::class)
             ->profile()
+            // Setelah simpan form tambah/ubah, kembali ke daftar (bukan tetap di form).
+            ->resourceCreatePageRedirect('index')
+            ->resourceEditPageRedirect('index')
             ->brandName('Sistem Informasi Jemaat')
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.75rem')
@@ -45,7 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             // Konten memakai seluruh lebar layar (bawaan Filament dibatasi 7xl / ±1280px).
-            ->maxContentWidth(\Filament\Support\Enums\Width::Full)
+            ->maxContentWidth(Width::Full)
             ->navigationGroups([
                 NavigationGroup::make('Jemaat'),
                 NavigationGroup::make('Ibadah & Kehadiran'),
