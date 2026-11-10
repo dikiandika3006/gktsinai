@@ -27,6 +27,27 @@ class DuplikatJemaat extends Page
         return auth()->user()->peran('super_admin', 'sekretariat');
     }
 
+    /** Menu hanya tampil bila ada kemungkinan duplikat, dengan badge merah jumlahnya. */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess() && app(DuplicateFinder::class)->jumlah() > 0;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) app(DuplicateFinder::class)->jumlah();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'danger';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Pasangan data jemaat yang kemungkinan sama orangnya';
+    }
+
     public function merge(int $keepId, int $removeId): void
     {
         $keep = Member::findOrFail($keepId);

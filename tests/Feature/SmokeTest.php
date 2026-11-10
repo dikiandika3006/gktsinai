@@ -47,7 +47,7 @@ class SmokeTest extends TestCase
             '/admin/activity-sessions', "/admin/activity-sessions/{$s->id}", '/admin/activity-sessions/create',
             '/admin/guests', "/admin/guests/{$g->id}", '/admin/visits', "/admin/visits/{$v->id}",
             '/admin/growth-targets', '/admin/pertumbuhan', '/admin/laporan-kehadiran', '/admin/daftar-perhatian',
-            '/admin/usulan-visitasi', '/admin/peta-jemaat', '/admin/import-jemaat', '/admin/duplikat-jemaat',
+            '/admin/usulan-visitasi', '/admin/peta-jemaat', '/admin/duplikat-jemaat',
             '/absen', "/absen/{$s->id}", "/absen/{$s->id}/data", "/sesi/{$s->id}/qr",
             "/pdf/jemaat/{$m->id}", "/pdf/kk/{$f->id}", '/pdf/rekap', '/pdf/bulanan?bulan='.now()->format('Y-m'),
         ];
@@ -91,7 +91,6 @@ class SmokeTest extends TestCase
         $this->flushSession();
         $this->actingAs($this->user('majelis@gktsinai.test'));
         $this->get('/admin/members')->assertOk();
-        $this->get('/admin/import-jemaat')->assertForbidden();
         $this->get('/admin/pemeliharaan')->assertForbidden();
         $this->get('/pdf/rekap')->assertForbidden();
 

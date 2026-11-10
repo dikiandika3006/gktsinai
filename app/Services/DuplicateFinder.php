@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Member;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -13,6 +14,14 @@ use Illuminate\Support\Str;
  */
 class DuplicateFinder
 {
+    public const CACHE_JUMLAH = 'sij.duplikat_count';
+
+    /** Jumlah pasangan kemungkinan duplikat (di-cache untuk badge menu). */
+    public function jumlah(): int
+    {
+        return Cache::remember(self::CACHE_JUMLAH, 3600, fn () => $this->allPairs()->count());
+    }
+
     public static function normalize(string $nama): string
     {
         return Str::of($nama)->lower()->ascii()->replaceMatches('/[^a-z ]/', '')->squish()->value();

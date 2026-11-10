@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Services\DuplicateFinder;
 use App\Support\Opsi;
 use App\Support\Telepon;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class Member extends Model
 {
@@ -43,6 +45,10 @@ class Member extends Model
                 $m->activity_status = null;
             }
         });
+
+        // Jumlah kemungkinan duplikat (badge menu) dihitung ulang setelah data jemaat berubah.
+        static::saved(fn (Member $m) => $m->wasChanged(['name', 'birth_date']) || $m->wasRecentlyCreated ? Cache::forget(DuplicateFinder::CACHE_JUMLAH) : null);
+        static::deleted(fn () => Cache::forget(DuplicateFinder::CACHE_JUMLAH));
     }
 
     /** Kode jemaat otomatis SIBxxxx, melanjutkan nomor terakhir. */
